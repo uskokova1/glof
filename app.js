@@ -35,6 +35,10 @@ var boxB = Bodies.circle(450, 50, 20, {
     lineWidth: 3
   }
 });
+boxA.frictionAir = 0.05;
+boxB.frictionAir = 0.05;
+boxA.restitution = 0.8;
+boxB.restitution = 0.8;
 var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
 
 
@@ -49,10 +53,12 @@ var runner = Runner.create();
 // run the engine
 Runner.run(runner, engine);
 
-
 //mouseCons = Matter.MouseConstraint.create(engine)     Composite.add add mouse for it to work
 
 canvas = document.querySelector("canvas")
+canvas.style.position = 'absolute';
+canvas.style.left = '0px';
+canvas.style.top = '0px';
 
 document.addEventListener('click', function (e) {
   bounds = canvas.getBoundingClientRect();
@@ -60,7 +66,9 @@ document.addEventListener('click', function (e) {
   relY = e.clientY - bounds.top - boxA.position.y;
   console.log(relX, relY);
   pos = Matter.Vector.create(boxA.position.x, boxA.position.y);
-  force = Matter.Vector.create(-relX / 5000, -relY / 5000);
+  force = Matter.Vector.create(-relX / 2000, -relY / 2000);
   Matter.Body.applyForce(boxA, pos, force);
 });
+
+
 
