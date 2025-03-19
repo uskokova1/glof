@@ -60,7 +60,7 @@ canvas.style.position = 'absolute';
 canvas.style.left = '0px';
 canvas.style.top = '0px';
 
-document.addEventListener('click', function (e) {
+document.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
   bounds = canvas.getBoundingClientRect();
   relX = e.clientX - bounds.left - boxA.position.x;
   relY = e.clientY - bounds.top - boxA.position.y;
