@@ -67,8 +67,15 @@ document.addEventListener('click', function (e) { //on click, gets the mouse X a
   console.log(relX, relY);
   pos = Matter.Vector.create(boxA.position.x, boxA.position.y);
   force = Matter.Vector.create(-relX / 2000, -relY / 2000);
-  Matter.Body.applyForce(boxA, pos, force);
+  socket.emit('click', force)
+  //Matter.Body.applyForce(boxA, pos, force);
 });
 
+const socket = io('ws://localhost:80');
 
 
+socket.on('update', (data)=>{
+  //console.log(data);
+  boxA.position.x = data.boxApos[0];
+  boxA.position.y = data.boxApos[1];
+})
