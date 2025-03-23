@@ -3,7 +3,23 @@ const url = require('url');
 const fs = require('fs');
 const path = require('path');
 
-let boxApos = [400,200];
+players = {};
+
+class Player
+{
+
+    constructor(socketID, x,y,velx,vely)
+    {
+        this.socketID = socketID;
+        this.x = x;
+        this.y = y;
+        this.velx = velx;
+        this.vely = vely;
+        players[socketID] = this;
+        //players.push(this);
+    }
+
+}
 
 const myserver = http.createServer(function (req, res) {
     const urlObj = url.parse(req.url, true);
@@ -26,7 +42,7 @@ const myserver = http.createServer(function (req, res) {
         }else {
             newPath = "."+urlObj.path;
         }
-        console.log(newPath);
+        //console.log(newPath);
         sendFile(newPath);
     }
 
@@ -66,7 +82,7 @@ const io = require('socket.io')(myserver,{
 myserver.listen(80); //the server object listens on port 8080
 
 
-
+/*
 const Matter = require("matter-js");
 // module aliases
 var Engine = Matter.Engine,
@@ -87,28 +103,48 @@ boxB.restitution = 0.8;
 var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
 // add all of the bodies to the world
 Composite.add(engine.world, [boxA, boxB, ground]);
+*/
 frameRate = 16.666
 
 setInterval(() => {
-  Engine.update(engine, frameRate);
-  io.emit("update", {
-    boxApos: [boxA.position.x, boxA.position.y] //,
-  });
+  //Engine.update(engine, frameRate);
+    io.emit("updateAll",JSON.stringify(players));
+    /*
+    for (const [id, playerObj] of Object.entries(players)) {
+        //console.log(id, playerObj);
+        io.emit('updateAll', id, playerObj.x,playerObj.y,playerObj.velx,playerObj.vely,playerObj.socketID);
+    }
+    */
+    /*
+     for (let i = 0; i < players.length; i++) {
+         io.emit('update', players[i].ball.position.x, players[i].ball.position.y,players[i].socketID);
+     }*/
 }, frameRate);
 
 
 io.on('connection', function(socket) {
     console.log(socket.id);
+    new Player(socket.id, Math.random()*250,Math.random()*250);
+    //Composite.add(engine.world, p1.ball);
+    socket.emit('init', players[socket.id].x,players[socket.id].y,socket.id,JSON.stringify(players));
 
-    socket.on('message', function(data) {
-        console.log(data);
-        io.emit('message', data);
-    });
+
     socket.on('disconnect', () => {
         console.log('user disconnected');
+        delete players[socket.id]
     });
+
+    socket.on('updateSelf', (x,y,velx,vely) => {
+        players[socket.id].x = x;
+        players[socket.id].y = y;
+        players[socket.id].velx = velx;
+        players[socket.id].vely = vely;
+    });
+    /*
     socket.on('click', (force) => {
+        console.log(players);
         pos = Matter.Vector.create(boxA.position.x, boxA.position.y);
         Matter.Body.applyForce(boxA, pos, force);
     })
+    */
 });

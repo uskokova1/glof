@@ -20,30 +20,12 @@ var render = Render.create({
     wireframes: false // <-- important
   }
 });
-// create two boxes and a ground
-var boxA = Bodies.circle(400, 200, 20, {
-  render: {
-    fillStyle: 'red',
-    strokeStyle: 'blue',
-    lineWidth: 3
-  }
-});
-var boxB = Bodies.circle(450, 50, 20, {
-  render: {
-    fillStyle: 'white',
-    strokeStyle: 'blue',
-    lineWidth: 3
-  }
-});
-boxA.frictionAir = 0.05;
-boxB.frictionAir = 0.05;
-boxA.restitution = 0.8;
-boxB.restitution = 0.8;
+
 var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
 
 
 // add all of the bodies to the world
-Composite.add(engine.world, [boxA, boxB, ground]);
+Composite.add(engine.world, ground);
 // run the renderer
 Render.run(render);
 
@@ -61,21 +43,75 @@ canvas.style.left = '0px';
 canvas.style.top = '0px';
 
 document.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
+  myBall = players[socket.id]
   bounds = canvas.getBoundingClientRect();
-  relX = e.clientX - bounds.left - boxA.position.x;
-  relY = e.clientY - bounds.top - boxA.position.y;
+  relX = e.clientX - bounds.left - myBall.position.x;
+  relY = e.clientY - bounds.top - myBall.position.y;
   console.log(relX, relY);
-  pos = Matter.Vector.create(boxA.position.x, boxA.position.y);
+  pos = Matter.Vector.create(myBall.position.x, myBall.position.y);
   force = Matter.Vector.create(-relX / 2000, -relY / 2000);
-  socket.emit('click', force)
-  //Matter.Body.applyForce(boxA, pos, force);
+  //socket.emit('click', force, socket.id);
+  Matter.Body.applyForce(myBall, pos, force);
 });
+
+players={
+
+};
 
 const socket = io('ws://localhost:80');
 
+socket.on('init', function(x,y,sock,jsonplayers) {
+  playerStats = JSON.parse(jsonplayers);
+  for (const [sock, player] of Object.entries(playerStats)){
+    players[sock] = Bodies.circle(player.x, player.y, 20, {
+      render: {
+        fillStyle: 'white',
+        strokeStyle: 'blue',
+        lineWidth: 3
+      },
+      frictionAir:0.05,
+      restitution:0.8
+    });
+    Composite.add(engine.world,players[sock]);
+  }
+  console.log(players)
+});
+socket.on('updateAll', (data)=>{
+  //console.log(JSON.parse(data))
+  playerStats = JSON.parse(data)
+  for (const [sock, player] of Object.entries(playerStats)){
+    if(sock == socket.id) {
+      socket.emit('updateSelf',
+          players[socket.id].position.x,
+              players[socket.id].position.y,
+              players[socket.id].velocity.x,
+              players[socket.id].velocity.y);
+    }else{
+      if (!players[sock]) {
+        players[sock] = Bodies.circle(player.x, player.y, 20, {
+          render: {
+            fillStyle: 'white',
+            strokeStyle: 'blue',
+            lineWidth: 3
+          },
+          frictionAir:0.05,
+          restitution:0.8
+        });
+        Composite.add(engine.world, players[sock]);
+        }
+      players[sock].velocity.x = player.velx;
+      players[sock].velocity.y = player.vely;
+      players[sock].position.x = player.x;
+      players[sock].position.y = player.y;
+    }
+  }
+});
 
-socket.on('update', (data)=>{
-  //console.log(data);
-  boxA.position.x = data.boxApos[0];
-  boxA.position.y = data.boxApos[1];
-})
+// setInterval(() => {
+//   //console.log(players[socket.id]);
+//     socket.emit('updateSelf', (
+//         players[socket.id].position.x,
+//           players[socket.id].position.y,
+//           players[socket.id].velocity.x,
+//           players[socket.id].velocity.y));
+// }, 16.666);
