@@ -50,8 +50,8 @@ document.addEventListener('click', function (e) { //on click, gets the mouse X a
   console.log(relX, relY);
   pos = Matter.Vector.create(myBall.position.x, myBall.position.y);
   force = Matter.Vector.create(-relX / 2000, -relY / 2000);
-  //socket.emit('click', force, socket.id);
-  Matter.Body.applyForce(myBall, pos, force);
+  socket.emit('click', pos, force, socket.id);
+  //Matter.Body.applyForce(myBall, pos, force);
 });
 
 players={
@@ -60,10 +60,9 @@ players={
 
 const socket = io('ws://localhost:80');
 
-socket.on('init', function(x,y,sock,jsonplayers) {
-  playerStats = JSON.parse(jsonplayers);
-  for (const [sock, player] of Object.entries(playerStats)){
-    players[sock] = Bodies.circle(player.x, player.y, 20, {
+socket.on('init', function(x,y,sock) {
+  if (!players[sock]) {
+    players[sock] = Bodies.circle(x, y, 20, {
       render: {
         fillStyle: 'white',
         strokeStyle: 'blue',
@@ -72,23 +71,25 @@ socket.on('init', function(x,y,sock,jsonplayers) {
       frictionAir:0.05,
       restitution:0.8
     });
-    Composite.add(engine.world,players[sock]);
+    Composite.add(engine.world, players[sock]);
   }
-  console.log(players)
+    //Composite.add(engine.world,players[sock]);
+    //console.log(players)
 });
-socket.on('updateAll', (data)=>{
+socket.on('updateAll', (x,y,velx,vely,sock)=>{
   //console.log(JSON.parse(data))
-  playerStats = JSON.parse(data)
-  for (const [sock, player] of Object.entries(playerStats)){
+  //playerStats = JSON.parse(data)
+  //for (const [sock, player] of Object.entries(playerStats)){
+    /*
     if(sock == socket.id) {
       socket.emit('updateSelf',
           players[socket.id].position.x,
               players[socket.id].position.y,
               players[socket.id].velocity.x,
               players[socket.id].velocity.y);
-    }else{
+    }else{*/
       if (!players[sock]) {
-        players[sock] = Bodies.circle(player.x, player.y, 20, {
+        players[sock] = Bodies.circle(x, y, 20, {
           render: {
             fillStyle: 'white',
             strokeStyle: 'blue',
@@ -99,12 +100,13 @@ socket.on('updateAll', (data)=>{
         });
         Composite.add(engine.world, players[sock]);
         }
-      players[sock].velocity.x = player.velx;
-      players[sock].velocity.y = player.vely;
-      players[sock].position.x = player.x;
-      players[sock].position.y = player.y;
-    }
-  }
+      players[sock].position.x = x;
+      players[sock].position.y = y;
+  players[sock].velocity.x = velx;
+  players[sock].velocity.y = vely;
+  //console.log(players)
+      //}
+  //}
 });
 
 // setInterval(() => {
