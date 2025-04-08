@@ -72,7 +72,8 @@ const myserver = http.createServer(function (req, res) {
 });
 
 const io = require('socket.io')(myserver,{
-    cors: {origin: '*'} //any url can access our backend
+    cors: {origin: '*', methods:["GET","POST"]} //any url can access our backend
+
 });
 
 

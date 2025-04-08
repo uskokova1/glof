@@ -58,7 +58,7 @@ players={
 
 };
 
-const socket = io('ws://localhost:80');
+const socket = io.connect('http://34.58.13.86:80');
 
 socket.on('init', function(x,y,sock) {
   if (!players[sock]) {
