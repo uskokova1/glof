@@ -73,21 +73,9 @@ socket.on('init', function(x,y,sock) {
     });
     Composite.add(engine.world, players[sock]);
   }
-    //Composite.add(engine.world,players[sock]);
-    //console.log(players)
 });
 socket.on('updateAll', (x,y,velx,vely,sock)=>{
-  //console.log(JSON.parse(data))
-  //playerStats = JSON.parse(data)
-  //for (const [sock, player] of Object.entries(playerStats)){
-    /*
-    if(sock == socket.id) {
-      socket.emit('updateSelf',
-          players[socket.id].position.x,
-              players[socket.id].position.y,
-              players[socket.id].velocity.x,
-              players[socket.id].velocity.y);
-    }else{*/
+
       if (!players[sock]) {
         players[sock] = Bodies.circle(x, y, 20, {
           render: {
@@ -100,20 +88,17 @@ socket.on('updateAll', (x,y,velx,vely,sock)=>{
         });
         Composite.add(engine.world, players[sock]);
         }
+      Matter.Body.setPosition(players[sock], Matter.Vector.create(x,y));
+      /*
       players[sock].position.x = x;
       players[sock].position.y = y;
-  players[sock].velocity.x = velx;
-  players[sock].velocity.y = vely;
-  //console.log(players)
-      //}
-  //}
+      players[sock].velocity.x = velx;
+      players[sock].velocity.y = vely;
+*/
 });
 
-// setInterval(() => {
-//   //console.log(players[socket.id]);
-//     socket.emit('updateSelf', (
-//         players[socket.id].position.x,
-//           players[socket.id].position.y,
-//           players[socket.id].velocity.x,
-//           players[socket.id].velocity.y));
-// }, 16.666);
+socket.on('removePlayer', (sock) => {
+  Composite.remove(engine.world, players[sock]);
+  console.log('user disconnected');
+  delete players[sock]
+});

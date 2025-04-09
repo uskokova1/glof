@@ -8,10 +8,12 @@ players = {};
 class Player
 {
 
-    constructor(socketID, ballObj)
+    constructor(socketID, ballObj, name, room)
     {
         this.socketID = socketID;
         this.ballObj = ballObj;
+        this.name = name;
+        this.room = room;
         players[socketID] = this;
         //players.push(this);
     }
@@ -20,9 +22,8 @@ class Player
 
 const myserver = http.createServer(function (req, res) {
     const urlObj = url.parse(req.url, true);
-
-    // console.log(req.url);
-    // console.log(urlObj);
+    //console.log(req.url);
+    //console.log(urlObj);
 
     switch(urlObj.pathname.slice(1)){
         case "data": //each case will be a queury such as cancel or schedule from the homework
@@ -35,9 +36,9 @@ const myserver = http.createServer(function (req, res) {
 
     function none(){
         if (urlObj.path == "/"){
-            newPath = "./frontend.html";
+            newPath = "./main_menu.html";
         }else {
-            newPath = "."+urlObj.path;
+            newPath = "."+urlObj.pathname;
         }
         //console.log(newPath);
         sendFile(newPath);
@@ -60,6 +61,9 @@ const myserver = http.createServer(function (req, res) {
                     res.writeHead(200, {'Content-Type': 'image/vnd.microsoft.icon'});
                     break;
                 case ".js":
+                    res.writeHead(200, {'Content-Type': 'text/javascript'});
+                    break;
+                case ".php":
                     res.writeHead(200, {'Content-Type': 'text/javascript'});
                     break;
                 default:
@@ -97,7 +101,7 @@ var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
 // add all of the bodies to the world
 Composite.add(engine.world, [ground]);
 
-frameRate = 6.666
+frameRate = 16.666
 
 setInterval(() => {
   Engine.update(engine, frameRate);
@@ -126,14 +130,14 @@ io.on('connection', function(socket) {
         Bodies.circle(Math.random()*250, Math.random()*250, 20, {
         frictionAir:0.05,
         restitution:0.8
-    }));
-
+    })
+    );
     Composite.add(engine.world,players[socket.id].ballObj);
-    //Composite.add(engine.world, p1.ball);
     socket.emit('init', players[socket.id].x,players[socket.id].y,socket.id);
 
 
     socket.on('disconnect', () => {
+        socket.emit('removePlayer', socket.id);
         console.log('user disconnected');
         delete players[socket.id]
     });
