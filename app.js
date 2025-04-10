@@ -54,13 +54,13 @@ document.addEventListener('click', function (e) { //on click, gets the mouse X a
   //Matter.Body.applyForce(myBall, pos, force);
 });
 
-players={
+players = {
 
 };
 
 const socket = io('ws://localhost:80');
 
-socket.on('init', function(x,y,sock) {
+socket.on('init', function (x, y, sock) {
   if (!players[sock]) {
     players[sock] = Bodies.circle(x, y, 20, {
       render: {
@@ -68,32 +68,37 @@ socket.on('init', function(x,y,sock) {
         strokeStyle: 'blue',
         lineWidth: 3
       },
-      frictionAir:0.05,
-      restitution:0.8
+      frictionAir: 0.05,
+      restitution: 0.8
     });
     Composite.add(engine.world, players[sock]);
   }
 });
-socket.on('updateAll', (x,y,velx,vely,sock)=>{
+socket.on('updateAll', (x, y, velx, vely, sock) => {
 
-      if (!players[sock]) {
-        players[sock] = Bodies.circle(x, y, 20, {
-          render: {
-            fillStyle: 'white',
-            strokeStyle: 'blue',
-            lineWidth: 3
-          },
-          frictionAir:0.05,
-          restitution:0.8
-        });
-        Composite.add(engine.world, players[sock]);
-        }
-      Matter.Body.setPosition(players[sock], Matter.Vector.create(x,y));
-      /*
-      players[sock].position.x = x;
-      players[sock].position.y = y;
-      players[sock].velocity.x = velx;
-      players[sock].velocity.y = vely;
+  if (!players[sock]) {
+    players[sock] = Bodies.circle(x, y, 20, {
+      render: {
+        fillStyle: 'white',
+        strokeStyle: 'blue',
+        lineWidth: 3
+      },
+      frictionAir: 0.05,
+      restitution: 0.8
+    });
+    //Composite.add(engine.world, players[sock]);
+    compoundBody = Matter.Body.create({ parts: [mapbod, players[sock]] });
+    Composite.add(engine.world, compoundBody);
+
+
+    //Matter.Body.setParts(mapbod, players.entries);
+  }
+  Matter.Body.setPosition(players[sock], Matter.Vector.create(x, y));
+  /*
+  players[sock].position.x = x;
+  players[sock].position.y = y;
+  players[sock].velocity.x = velx;
+  players[sock].velocity.y = vely;
 */
 });
 
@@ -102,3 +107,10 @@ socket.on('removePlayer', (sock) => {
   console.log('user disconnected');
   delete players[sock]
 });
+
+verts = Matter.Vertices.create([{ x: 300, y: 200 }, { x: 320, y: 390 }, { x: 550, y: 565 }, { x: 500, y: 200 }])
+
+mapbod = Bodies.fromVertices(400, 300, verts, { wireframes: true });
+console.log(Object.entries(players));
+console.log(players);
+mapbod.isStatic = true;
