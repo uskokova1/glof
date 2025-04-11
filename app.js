@@ -60,6 +60,10 @@ players={
 
 const socket = io('ws://localhost:80');
 
+const urlParams = new URLSearchParams(window.location.search);
+const room = urlParams.get('room');
+
+
 socket.on('init', function(x,y,sock) {
   if (!players[sock]) {
     players[sock] = Bodies.circle(x, y, 20, {
@@ -72,11 +76,12 @@ socket.on('init', function(x,y,sock) {
       restitution:0.8
     });
     Composite.add(engine.world, players[sock]);
+
   }
 });
-socket.on('updateAll', (x,y,velx,vely,sock)=>{
 
-      if (!players[sock]) {
+socket.on('updateAll', (x,y,velx,vely,sock)=>{
+  if (!players[sock]) {
         players[sock] = Bodies.circle(x, y, 20, {
           render: {
             fillStyle: 'white',
@@ -87,8 +92,11 @@ socket.on('updateAll', (x,y,velx,vely,sock)=>{
           restitution:0.8
         });
         Composite.add(engine.world, players[sock]);
-        }
-      Matter.Body.setPosition(players[sock], Matter.Vector.create(x,y));
+    console.log(sock);
+  }
+
+    Matter.Body.setPosition(players[sock], Matter.Vector.create(x,y));
+
       /*
       players[sock].position.x = x;
       players[sock].position.y = y;
@@ -102,3 +110,5 @@ socket.on('removePlayer', (sock) => {
   console.log('user disconnected');
   delete players[sock]
 });
+
+
