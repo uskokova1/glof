@@ -62,7 +62,7 @@ const socket = io('ws://localhost:80');
 
 const urlParams = new URLSearchParams(window.location.search);
 const room = urlParams.get('room');
-
+socket.emit("newPlayer", room);
 
 socket.on('init', function(x,y,sock) {
   if (!players[sock]) {

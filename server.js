@@ -77,7 +77,7 @@ class Player
     }
 
 }
-roomtemp = null
+
 const myserver = http.createServer(function (req, res) {
     const urlObj = url.parse(req.url, true);
     //console.log(req.url);
@@ -91,8 +91,7 @@ const myserver = http.createServer(function (req, res) {
             //console.log(urlObj.pathname);
             if(games[urlObj.query.room] == null) {
                 console.log("NEW GAME");
-                roomtemp = urlObj.query.room;
-                new Game(roomtemp);
+                new Game(urlObj.query.room);
                 //createPlayer(urlObj.query.room);
             }
             none();
@@ -175,11 +174,10 @@ io.on('connection', function(socket) {
 
 
 io.on('connection', (socket) => {
-        console.log(socket.id);
-        code = roomtemp;
-        socket.code = code;
-        socket.join(code);
-        console.log(code);
+    socket.on('newPlayer', (room) => {
+        socket.code = room;
+        socket.join(room);
+        console.log(room);
         console.log([...socket.rooms]);
         /*
         if(games[code].players[socket.id] != undefined)
@@ -187,13 +185,17 @@ io.on('connection', (socket) => {
             games[code].deletePlayer(games[code].players[socket.id]);
         }
          */
-        games[code].addPlayer(
+        games[room].addPlayer(
             new Player(socket.id,
                 Matter.Bodies.circle(Math.random()*250, Math.random()*250, 20, {
                     frictionAir:0.05,
                     restitution:0.8
                 })
             ));
+    })
+        console.log(socket.id);
+        //code = roomtemp;
+
 
     /*
     socket.to(code).emit('init',
@@ -208,11 +210,13 @@ io.on('connection', (socket) => {
         Matter.Body.applyForce(games[socket.code].players[sock].ballObj, pos, force);
     });
     socket.on('disconnect', () => {
-
+        if(games[socket.code] != undefined){
+            games[socket.code].deletePlayer(games[socket.code].players[socket.id]);
+        }
         //console.log([...socket.rooms]);
         //socket.emit('removePlayer', socket.id);
         console.log('user disconnected');
-        games[socket.code].deletePlayer(games[socket.code].players[socket.id]);
+
     });
     //socket.emit('init', players[socket.id].x,players[socket.id].y,socket.id);
 });
