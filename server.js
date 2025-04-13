@@ -175,8 +175,6 @@ io.on('connection', function(socket) {
 
 
 io.on('connection', (socket) => {
-
-
         console.log(socket.id);
         code = roomtemp;
         socket.code = code;
@@ -214,7 +212,7 @@ io.on('connection', (socket) => {
         //console.log([...socket.rooms]);
         //socket.emit('removePlayer', socket.id);
         console.log('user disconnected');
-        //deletePlayer(players[socket.id]);
+        games[socket.code].deletePlayer(games[socket.code].players[socket.id]);
     });
     //socket.emit('init', players[socket.id].x,players[socket.id].y,socket.id);
 });
