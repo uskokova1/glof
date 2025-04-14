@@ -66,12 +66,12 @@ class Game{
 class Player
 {
 
-    constructor(socketID, ballObj, name, room)
+    constructor(socketID, ballObj, name, color)
     {
         this.socketID = socketID;
         this.ballObj = ballObj;
         this.name = name;
-        this.room = room;
+        this.color = color;
         //players[socketID] = this;
         //players.push(this);
     }
@@ -174,7 +174,8 @@ io.on('connection', function(socket) {
 
 
 io.on('connection', (socket) => {
-    socket.on('newPlayer', (room) => {
+
+    socket.on('newPlayer', (room,name,color) => {
         socket.code = room;
         socket.join(room);
         console.log(room);
@@ -190,33 +191,28 @@ io.on('connection', (socket) => {
                 Matter.Bodies.circle(Math.random()*250, Math.random()*250, 20, {
                     frictionAir:0.05,
                     restitution:0.8
-                })
+                }),name,color
             ));
-    })
-        console.log(socket.id);
-        //code = roomtemp;
+    });
+    console.log(socket.id);
 
-
-    /*
-    socket.to(code).emit('init',
-        games[code].players[socket.id].x,
-        games[code].players[socket.id].y,socket.id);
-    */
-
+    socket.on('requestPlayer', (sock,room) => {
+        socket.emit('createPlayer',
+            games[room].players[sock].name,
+            sock,
+            games[room].players[sock].ballObj.x,
+            games[room].players[sock].ballObj.y,
+            games[room].players[sock].color,
+        );
+    });
     socket.on('click', (pos,force,sock) => {
-        //console.log(players);
-        //console.log([...socket.rooms]);
-        //pos = Matter.Vector.create(boxA.position.x, boxA.position.y);
         Matter.Body.applyForce(games[socket.code].players[sock].ballObj, pos, force);
     });
     socket.on('disconnect', () => {
         if(games[socket.code] != undefined){
             games[socket.code].deletePlayer(games[socket.code].players[socket.id]);
         }
-        //console.log([...socket.rooms]);
-        //socket.emit('removePlayer', socket.id);
         console.log('user disconnected');
 
     });
-    //socket.emit('init', players[socket.id].x,players[socket.id].y,socket.id);
 });
