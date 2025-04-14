@@ -33,6 +33,39 @@ class Game{
         games[code] = this;
 
 
+        //adding a hole for the glof ball to go into
+        this.hole = this.Bodies.circle(600, 300, 15, {
+            isStatic: true,
+            isSensor: true,
+            render: {
+                fillStyle: 'black'
+            }
+        });
+        this.Composite.add(this.engine.world, this.hole);
+
+        Matter.Events.on(this.engine, 'collisionStart', (event) => {
+            const pairs = event.pairs;
+
+            for (let i = 0; i < pairs.length; i++) {
+                const bodyA = pairs[i].bodyA;
+                const bodyB = pairs[i].bodyB;
+
+                for (const [id, playerObj] of Object.entries(this.players)) {
+                    if (
+                        (bodyA === playerObj.ballObj && bodyB === this.hole) ||
+                        (bodyB === playerObj.ballObj && bodyA === this.hole)
+                    ) {
+                        console.log(`Player ${id} scored!`);
+                        io.to(this.code).emit('playerScored', id);
+
+                        // Reset player ball position or take other action
+                        Matter.Body.setPosition(playerObj.ballObj, { x: 200, y: 200 });
+                        Matter.Body.setVelocity(playerObj.ballObj, { x: 0, y: 0 });
+                    }
+                }
+            }
+        });
+
     }
     addPlayer = function(player){
         //console.log(player);
