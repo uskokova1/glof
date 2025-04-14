@@ -52,7 +52,7 @@ canvas.style.left = '0px';
 canvas.style.top = '0px';
 
 document.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
-  myBall = players[socket.id]
+  myBall = players[socket.id].ballObj
   bounds = canvas.getBoundingClientRect();
   relX = e.clientX - bounds.left - myBall.position.x;
   relY = e.clientY - bounds.top - myBall.position.y;
@@ -71,51 +71,44 @@ const socket = io('ws://localhost:80');
 
 const urlParams = new URLSearchParams(window.location.search);
 const room = urlParams.get('room');
-socket.emit("newPlayer", room);
+const name = urlParams.get('nick');
+const color = urlParams.get('color');
+socket.emit("newPlayer", room,name,color);
 
-socket.on('init', function(x,y,sock) {
-  if (!players[sock]) {
-    players[sock] = Bodies.circle(x, y, 20, {
-      render: {
-        fillStyle: 'white',
-        strokeStyle: 'blue',
-        lineWidth: 3
-      },
-      frictionAir:0.05,
-      restitution:0.8
-    });
-    Composite.add(engine.world, players[sock]);
-
+class Player{
+  constructor(name,color,ballObj){
+    this.name = name;
+    this.color = color;
+    this.ballObj = ballObj;
   }
-});
+}
 
-socket.on('updateAll', (x,y,velx,vely,sock)=>{
-  if (!players[sock]) {
-        players[sock] = Bodies.circle(x, y, 20, {
+socket.on('createPlayer', function(name,sock,x,y,color) {
+  if(players[sock] == undefined) {
+    players[sock] = new Player(name,color,
+        Bodies.circle(x, y, 20, {
           render: {
-            fillStyle: 'white',
+            fillStyle: color,
             strokeStyle: 'blue',
             lineWidth: 3
           },
           frictionAir:0.05,
           restitution:0.8
-        });
-        Composite.add(engine.world, players[sock]);
-    console.log(sock);
+        }));
+    Composite.add(engine.world, players[sock].ballObj);
   }
+});
 
-    Matter.Body.setPosition(players[sock], Matter.Vector.create(x,y));
-
-      /*
-      players[sock].position.x = x;
-      players[sock].position.y = y;
-      players[sock].velocity.x = velx;
-      players[sock].velocity.y = vely;
-*/
+socket.on('updateAll', (x,y,velx,vely,sock)=>{
+  if (players[sock] == undefined) {
+    socket.emit("requestPlayer",sock,room);
+  }else {
+    Matter.Body.setPosition(players[sock].ballObj, Matter.Vector.create(x, y));
+  }
 });
 
 socket.on('removePlayer', (sock) => {
-  Composite.remove(engine.world, players[sock]);
+  Composite.remove(engine.world, players[sock].ballObj);
   console.log('user disconnected');
   delete players[sock]
 });
