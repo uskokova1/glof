@@ -32,8 +32,7 @@ class Game{
         this.code = code;
         games[code] = this;
 
-
-        //adding a hole for the glof ball to go into
+        //adding a hole for the glof ball to go int
         this.hole = this.Bodies.circle(600, 300, 15, {
             isStatic: true,
             isSensor: true,

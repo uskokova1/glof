@@ -125,5 +125,6 @@ socket.on('playerScored', (sock) => {
   if (sock === socket.id) {
      console.log('Player ${sock} scored!');
     }
+
 });
 
