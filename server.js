@@ -33,7 +33,7 @@ class Game{
         games[code] = this;
 
         //adding a hole for the glof ball to go int
-        this.hole = this.Bodies.circle(600, 300, 15, {
+        this.hole = this.Bodies.circle(700, 300, 0.05, {
             isStatic: true,
             isSensor: true,
             render: {
@@ -66,6 +66,8 @@ class Game{
         });
 
     }
+
+
     addPlayer = function(player){
         //console.log(player);
         this.players[player.socketID] = player;
