@@ -76,5 +76,6 @@ label {
 
 .join-btn:hover, .host-btn:hover {
   background-color: #00aa00;
+  scale: 105%;
   color: #12121a;
 }

@@ -16,15 +16,46 @@ var render = Render.create({
   options: {
     width: window.innerWidth,
     height: window.innerHeight,
-    background: "darkslategrey",
+    background: "rgb(34,61,34)",
     wireframes: false // <-- important
   }
 });
+tmpcol = "rgb(69,103,66)"
 
-var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true,
+  render:{
+    fillStyle: tmpcol
+  }});
+var g1 = Bodies.rectangle(800, 400, 30, 600, { isStatic: true,
+  render:{
+    fillStyle: tmpcol
+  }});
+var g2 = Bodies.rectangle(400, 450, 30, 355, { isStatic: true,
+  render:{
+    fillStyle: tmpcol
+  }});
+var g3 = Bodies.rectangle(400, 400, 500, 30, { isStatic: true,
+  render:{
+    fillStyle: tmpcol
+  }});
+var g4 = Bodies.rectangle(400, 100, 850, 30, { isStatic: true,
+  render:{
+    fillStyle: tmpcol
+  }});
+var g6 = Bodies.rectangle(0, 300, 30, 600, { isStatic: true,
+  render:{
+    fillStyle: tmpcol
+  }});
+var g5 = Bodies.circle(400, 125, 30, { isStatic: true,
+  render:{
+    fillStyle: tmpcol
+  }});
+
+Composite.add(engine.world, [g1,g2,g3,g4,g5,g6]);
+
 
 //so that the hole is visible on the frontend
-var hole = Bodies.circle(700, 300, 29, {
+var hole = Bodies.circle(500, 500, 19, {
   isStatic: true,
   isSensor: true,
   render: {
@@ -57,9 +88,17 @@ document.addEventListener('click', function (e) { //on click, gets the mouse X a
   relX = e.clientX - bounds.left - myBall.position.x;
   relY = e.clientY - bounds.top - myBall.position.y;
   console.log(relX, relY);
+  relX = Matter.Common.clamp(relX, -300, 300);
+  relY = Matter.Common.clamp(relY, -300, 300);
+
   pos = Matter.Vector.create(myBall.position.x, myBall.position.y);
-  force = Matter.Vector.create(-relX / 2000, -relY / 2000);
-  socket.emit('click', pos, force, socket.id);
+  force = Matter.Vector.create(-relX / 4000, -relY / 4000);
+
+  console.log(myBall.velocity.x, myBall.velocity.y);
+  if(players[socket.id].stopped){
+    socket.emit('click', pos, force, socket.id);
+    players[socket.id].stopped = false;
+  }
   //Matter.Body.applyForce(myBall, pos, force);
 });
 
@@ -67,7 +106,7 @@ players={
 
 };
 
-const socket = io.connect('http://34.58.13.86:80');
+const socket = io.connect('ws://localhost');
 
 const urlParams = new URLSearchParams(window.location.search);
 const room = urlParams.get('room');
@@ -80,13 +119,14 @@ class Player{
     this.name = name;
     this.color = color;
     this.ballObj = ballObj;
+    this.stopped = true;
   }
 }
 
 socket.on('createPlayer', function(name,sock,x,y,color) {
   if(players[sock] == undefined) {
     players[sock] = new Player(name,color,
-        Bodies.circle(x, y, 20, {
+        Bodies.circle(x, y, 14, {
           render: {
             fillStyle: color,
             strokeStyle: 'blue',
@@ -103,6 +143,9 @@ socket.on('updateAll', (x,y,velx,vely,sock)=>{
   if (players[sock] == undefined) {
     socket.emit("requestPlayer",sock,room);
   }else {
+    if(players[sock].ballObj.position.x - x < 0.01 && players[sock].ballObj.position.y - y  < 0.01) {
+      players[sock].stopped = true;
+    }
     Matter.Body.setPosition(players[sock].ballObj, Matter.Vector.create(x, y));
   }
 });

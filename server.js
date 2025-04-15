@@ -23,17 +23,13 @@ class Game{
         this.engine.gravity.y = 0
 // create two boxes and a ground
 
-        this.ground = this.Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
-// add all of the bodies to the world
-        this.Composite.add(this.engine.world, [this.ground]);
-
         this.frameRate = 16.666;
 
         this.code = code;
         games[code] = this;
 
         //adding a hole for the glof ball to go int
-        this.hole = this.Bodies.circle(700, 300, 0.05, {
+        this.hole = this.Bodies.circle(500, 500, 0.05, {
             isStatic: true,
             isSensor: true,
             render: {
@@ -58,12 +54,23 @@ class Game{
                         io.to(this.code).emit('playerScored', id);
 
                         // Reset player ball position or take other action
-                        Matter.Body.setPosition(playerObj.ballObj, { x: 200, y: 200 });
+                        Matter.Body.setPosition(playerObj.ballObj, { x:Math.random()*5+250, y:Math.random()*5+550 });
                         Matter.Body.setVelocity(playerObj.ballObj, { x: 0, y: 0 });
                     }
                 }
             }
         });
+
+
+        this.ground = this.Bodies.rectangle(400, 610, 810, 60, { isStatic: true});
+        this.g1 = this.Bodies.rectangle(800, 400, 30, 600, { isStatic: true});
+        this.g2 = this.Bodies.rectangle(400, 450, 30, 355, { isStatic: true});
+        this.g3 = this.Bodies.rectangle(400, 400, 500, 30, { isStatic: true});
+        this.g4 = this.Bodies.rectangle(400, 100, 850, 30, { isStatic: true});
+        this.g6 = this.Bodies.rectangle(0, 300, 30, 600, { isStatic: true});
+        this.g5 = this.Bodies.circle(400, 125, 30, { isStatic: true});
+
+        this.Composite.add(this.engine.world, [this.ground,this.g1,this.g2,this.g3,this.g4,this.g5,this.g6]);
 
     }
 
@@ -170,8 +177,10 @@ const myserver = http.createServer(function (req, res) {
                 default:
                     break;
             }
-            res.write(content);
-            res.end();
+            if(!err){
+                res.write(content);
+                res.end();
+            }
         });
     }
 });
@@ -192,38 +201,18 @@ setInterval(() => {
     }
     }, 16.666);
 
-/*
-io.on('connection', function(socket) {
-
-
-    socket.on('disconnect', () => {
-        console.log([...socket.rooms]);
-        //socket.emit('removePlayer', socket.id);
-        console.log('user disconnected');
-        //delete players[socket.id]
-    });
-});
- */
-
 
 
 
 io.on('connection', (socket) => {
-
     socket.on('newPlayer', (room,name,color) => {
         socket.code = room;
         socket.join(room);
         console.log(room);
         console.log([...socket.rooms]);
-        /*
-        if(games[code].players[socket.id] != undefined)
-        {
-            games[code].deletePlayer(games[code].players[socket.id]);
-        }
-         */
         games[room].addPlayer(
             new Player(socket.id,
-                Matter.Bodies.circle(Math.random()*250, Math.random()*250, 20, {
+                Matter.Bodies.circle(Math.random()*5+250, Math.random()*5+550, 14, {
                     frictionAir:0.05,
                     restitution:0.8
                 }),name,color
