@@ -178,10 +178,9 @@ const myserver = http.createServer(function (req, res) {
 
 
 
-
 myserver.listen(80); //the server object listens on port 8080
 io = require('socket.io')(myserver,{
-    cors: {origin: '*'} //any url can access our backend
+    cors: {origin: '*', methods:["GET","POST"]} //any url can access our backend
 });
 
 setInterval(() => {
@@ -250,3 +249,4 @@ io.on('connection', (socket) => {
 
     });
 });
+
