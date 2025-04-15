@@ -143,12 +143,14 @@ const myserver = http.createServer(function (req, res) {
 });
 
 
+const io = require('socket.io')(myserver,{
+    cors: {origin: '*', methods:["GET","POST"]} //any url can access our backend
+
+});
 
 
 myserver.listen(80); //the server object listens on port 8080
-io = require('socket.io')(myserver,{
-    cors: {origin: '*'} //any url can access our backend
-});
+
 
 setInterval(() => {
     for (const [code, game] of Object.entries(games)) {
@@ -213,6 +215,6 @@ io.on('connection', (socket) => {
             games[socket.code].deletePlayer(games[socket.code].players[socket.id]);
         }
         console.log('user disconnected');
-
     });
 });
+
