@@ -23,6 +23,15 @@ var render = Render.create({
 
 var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
 
+//so that the hole is visible on the frontend
+var hole = Bodies.circle(700, 300, 29, {
+  isStatic: true,
+  isSensor: true,
+  render: {
+    fillStyle: "black"
+  }
+});
+Composite.add(engine.world, hole);
 
 // add all of the bodies to the world
 Composite.add(engine.world, ground);
@@ -104,4 +113,11 @@ socket.on('removePlayer', (sock) => {
   delete players[sock]
 });
 
+// in the event that a player makes it into the hole
+socket.on('playerScored', (sock) => {
+  if (sock === socket.id) {
+     console.log('Player ${sock} scored!');
+    }
+
+});
 
