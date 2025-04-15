@@ -2,18 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>main menu :D</title>
-    <form action="/frontend.html">
-        <label for="nick">nickname:</label>
-        <input type="text" id="nick" name="nick"><br><br>
-        <label for="room">room:</label>
-        <input type="text" id="room" name="room"><br><br>
-        <label for="color">color:</label>
-        <input type="color" id="color" name="color"><br><br>
-        <input type="submit" value="join">
-    </form>
+    <title>Main Menu :D</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="menu-container">
+    <h1 class="game-title">Glof</h1>
 
+    <form action="/frontend.html" class="menu-form">
+        <label for="nick">Nickname:</label>
+        <input type="text" id="nick" name="nick" required>
+
+        <label for="room">Room:</label>
+        <input type="text" id="room" name="room" required>
+
+        <label for="color">Ball Color:</label>
+        <input type="color" id="color" name="color" value="#00ff00">
+
+        <div class="button-group">
+            <input type="submit" value="Join Game" class="join-btn">
+            <button type="button" class="host-btn" disabled>Host Game</button>
+        </div>
+    </form>
+</div>
 </body>
 </html>
