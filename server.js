@@ -2,19 +2,77 @@ const http = require('http');
 const url = require('url');
 const fs = require('fs');
 const path = require('path');
+const Matter = require("matter-js");
 
-players = {};
+//players = {};
+games = {};
+
+class Game{
+
+    constructor(code)
+    {
+        this.players = {};
+        // module aliases
+        this.Engine = Matter.Engine,
+        this.Render = Matter.Render,
+        this.Runner = Matter.Runner,
+        this.Bodies = Matter.Bodies,
+        this.Composite = Matter.Composite;
+// create an engine
+        this.engine = this.Engine.create();
+        this.engine.gravity.y = 0
+// create two boxes and a ground
+
+        this.ground = this.Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+// add all of the bodies to the world
+        this.Composite.add(this.engine.world, [this.ground]);
+
+        this.frameRate = 16.666;
+
+        this.code = code;
+        games[code] = this;
+
+
+    }
+    addPlayer = function(player){
+        //console.log(player);
+        this.players[player.socketID] = player;
+        this.Composite.add(this.engine.world,this.players[player.socketID].ballObj);
+        //console.log(this.players);
+    }
+
+    deletePlayer = function(player){
+        this.Composite.remove(this.engine.world,this.players[player.socketID].ballObj);
+        delete this.players[player.socketID];
+        io.to(this.code).emit('removePlayer', player.socketID);
+    }
+
+    updateGame = function(){
+        this.Engine.update(this.engine, this.frameRate);
+        //io.emit("updateAll",JSON.stringify(players));
+
+        for (const [id, playerObj] of Object.entries(this.players)) {
+            //console.log(id, playerObj);
+            io.to(this.code).emit('updateAll',
+                playerObj.ballObj.position.x,
+                playerObj.ballObj.position.y,
+                playerObj.ballObj.velocity.x,
+                playerObj.ballObj.velocity.y,
+                playerObj.socketID);
+        }
+    }
+}
 
 class Player
 {
 
-    constructor(socketID, ballObj, name, room)
+    constructor(socketID, ballObj, name, color)
     {
         this.socketID = socketID;
         this.ballObj = ballObj;
         this.name = name;
-        this.room = room;
-        players[socketID] = this;
+        this.color = color;
+        //players[socketID] = this;
         //players.push(this);
     }
 
@@ -28,6 +86,15 @@ const myserver = http.createServer(function (req, res) {
     switch(urlObj.pathname.slice(1)){
         case "data": //each case will be a queury such as cancel or schedule from the homework
             writeEnd("Day not valid");
+            break;
+        case "frontend.html":
+            //console.log(urlObj.pathname);
+            if(games[urlObj.query.room] == null) {
+                console.log("NEW GAME");
+                new Game(urlObj.query.room);
+                //createPlayer(urlObj.query.room);
+            }
+            none();
             break;
         default:
             none(); //this needs a better name lol :P
@@ -75,6 +142,7 @@ const myserver = http.createServer(function (req, res) {
     }
 });
 
+
 const io = require('socket.io')(myserver,{
     cors: {origin: '*', methods:["GET","POST"]} //any url can access our backend
 
@@ -84,76 +152,69 @@ const io = require('socket.io')(myserver,{
 myserver.listen(80); //the server object listens on port 8080
 
 
-
-const Matter = require("matter-js");
-// module aliases
-var Engine = Matter.Engine,
-    Render = Matter.Render,
-    Runner = Matter.Runner,
-    Bodies = Matter.Bodies,
-    Composite = Matter.Composite;
-// create an engine
-var engine = Engine.create();
-engine.gravity.y = 0
-// create two boxes and a ground
-
-var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
-// add all of the bodies to the world
-Composite.add(engine.world, [ground]);
-
-frameRate = 16.666
-
 setInterval(() => {
-  Engine.update(engine, frameRate);
-    //io.emit("updateAll",JSON.stringify(players));
-
-    for (const [id, playerObj] of Object.entries(players)) {
-        //console.log(id, playerObj);
-        io.emit('updateAll',
-            playerObj.ballObj.position.x,
-            playerObj.ballObj.position.y,
-            playerObj.ballObj.velocity.x,
-            playerObj.ballObj.velocity.y,
-            playerObj.socketID);
+    for (const [code, game] of Object.entries(games)) {
+        //console.log(code);
+        games[code].updateGame();
     }
+    }, 16.666);
 
-    /*
-     for (let i = 0; i < players.length; i++) {
-         io.emit('update', players[i].ball.position.x, players[i].ball.position.y,players[i].socketID);
-     }*/
-}, frameRate);
-
-
+/*
 io.on('connection', function(socket) {
-    console.log(socket.id);
-    new Player(socket.id,
-        Bodies.circle(Math.random()*250, Math.random()*250, 20, {
-        frictionAir:0.05,
-        restitution:0.8
-    })
-    );
-    Composite.add(engine.world,players[socket.id].ballObj);
-    socket.emit('init', players[socket.id].x,players[socket.id].y,socket.id);
 
 
     socket.on('disconnect', () => {
-        socket.emit('removePlayer', socket.id);
+        console.log([...socket.rooms]);
+        //socket.emit('removePlayer', socket.id);
         console.log('user disconnected');
-        delete players[socket.id]
+        //delete players[socket.id]
     });
-
-    socket.on('updateSelf', (x,y,velx,vely) => {
-        players[socket.id].x = x;
-        players[socket.id].y = y;
-        players[socket.id].velx = velx;
-        players[socket.id].vely = vely;
-    });
-
-    socket.on('click', (pos,force,sock) => {
-        //console.log(players);
-
-        //pos = Matter.Vector.create(boxA.position.x, boxA.position.y);
-        Matter.Body.applyForce(players[sock].ballObj, pos, force);
-    })
-
 });
+ */
+
+
+
+
+io.on('connection', (socket) => {
+
+    socket.on('newPlayer', (room,name,color) => {
+        socket.code = room;
+        socket.join(room);
+        console.log(room);
+        console.log([...socket.rooms]);
+        /*
+        if(games[code].players[socket.id] != undefined)
+        {
+            games[code].deletePlayer(games[code].players[socket.id]);
+        }
+         */
+        games[room].addPlayer(
+            new Player(socket.id,
+                Matter.Bodies.circle(Math.random()*250, Math.random()*250, 20, {
+                    frictionAir:0.05,
+                    restitution:0.8
+                }),name,color
+            ));
+    });
+    console.log(socket.id);
+
+    socket.on('requestPlayer', (sock,room) => {
+        socket.emit('createPlayer',
+            games[room].players[sock].name,
+            sock,
+            games[room].players[sock].ballObj.x,
+            games[room].players[sock].ballObj.y,
+            games[room].players[sock].color,
+        );
+    });
+    socket.on('click', (pos,force,sock) => {
+        Matter.Body.applyForce(games[socket.code].players[sock].ballObj, pos, force);
+    });
+    socket.on('disconnect', () => {
+        if(games[socket.code] != undefined){
+            games[socket.code].deletePlayer(games[socket.code].players[socket.id]);
+        }
+        console.log('user disconnected');
+    });
+});
+
