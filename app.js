@@ -21,11 +21,12 @@ var render = Render.create({
   }
 });
 tmpcol = "rgb(69,103,66)"
-
+/*
 var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true,
   render:{
     fillStyle: tmpcol
   }});
+
 var g1 = Bodies.rectangle(800, 400, 30, 600, { isStatic: true,
   render:{
     fillStyle: tmpcol
@@ -51,8 +52,10 @@ var g5 = Bodies.circle(400, 125, 30, { isStatic: true,
     fillStyle: tmpcol
   }});
 
-Composite.add(engine.world, [g1,g2,g3,g4,g5,g6]);
+Composite.add(engine.world, [ground,g1,g2,g3,g4,g5,g6]);
 
+
+ */
 
 //so that the hole is visible on the frontend
 var hole = Bodies.circle(500, 500, 19, {
@@ -64,8 +67,6 @@ var hole = Bodies.circle(500, 500, 19, {
 });
 Composite.add(engine.world, hole);
 
-// add all of the bodies to the world
-Composite.add(engine.world, ground);
 // run the renderer
 Render.run(render);
 
@@ -82,7 +83,17 @@ canvas.style.position = 'absolute';
 canvas.style.left = '0px';
 canvas.style.top = '0px';
 
-document.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
+canvas.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
+  if(mapMode){
+    tmpVerts.push({x:e.clientX, y:e.clientY});
+    c1 = Matter.Bodies.circle(e.clientX,e.clientY,25/2,{isStatic: true});
+    Composite.add(engine.world, c1);
+    tmpCircles.push(c1);
+  }
+  else{pushBall(e)}
+});
+
+function pushBall(e){
   myBall = players[socket.id].ballObj
   bounds = canvas.getBoundingClientRect();
   relX = e.clientX - bounds.left - myBall.position.x;
@@ -100,7 +111,7 @@ document.addEventListener('click', function (e) { //on click, gets the mouse X a
     players[socket.id].stopped = false;
   }
   //Matter.Body.applyForce(myBall, pos, force);
-});
+}
 
 players={
 
@@ -113,6 +124,7 @@ const room = urlParams.get('room');
 const name = urlParams.get('nick');
 const color = urlParams.get('color');
 socket.emit("newPlayer", room,name,color);
+//socket.emit("requestMap");       so that when you reload it will request the map state
 
 class Player{
   constructor(name,color,ballObj){
@@ -161,6 +173,88 @@ socket.on('playerScored', (sock) => {
   if (sock === socket.id) {
      console.log('Player ${sock} scored!');
     }
-
 });
 
+socket.on()
+
+//code interpreted from https://stackoverflow.com/questions/58507514/matter-js-hollow-circle-body
+const Body = Matter.Body;
+function createMap(x,y, verts, width, options,col) {
+  const parts = [];
+  for(let i = 1; i < verts.length; i++) {
+    m = (verts[i-1].y-verts[i].y)/(verts[i-1].x-verts[i].x); //slope
+    normal = -1/m; //perpendicular line of slope
+    angle = Math.atan(normal); //angle of normal in radians
+
+    const body = Bodies.fromVertices((verts[i-1].x + verts[i].x)/2,(verts[i-1].y+verts[i].y)/2, [
+        { x: verts[i-1].x , y: verts[i-1].y },
+      { x: verts[i-1].x +width*Math.cos(angle), y: verts[i-1].y+width*Math.sin(angle) },
+      { x: verts[i].x +width*Math.cos(angle), y: verts[i].y+width*Math.sin(angle) },
+      { x: verts[i].x , y: verts[i].y }
+    ],{render:{
+      fillStyle: col
+    }});
+    parts.push(body);
+  }
+  //catches the last edge :P
+  m = (verts[verts.length-1].y-verts[0].y)/(verts[verts.length-1].x-verts[0].x);
+  normal = -1/m;
+  angle = Math.atan(normal);
+  const body = Bodies.fromVertices((verts[0].x+verts[verts.length-1].x)/2,(verts[0].y+verts[verts.length-1].y)/2, [
+    { x: verts[0].x , y: verts[0].y },
+    { x: verts[0].x +width*Math.cos(angle), y: verts[0].y+width*Math.sin(angle) },
+    { x: verts[verts.length-1].x +width*Math.cos(angle), y: verts[verts.length-1].y+width*Math.sin(angle) },
+    { x: verts[verts.length-1].x , y: verts[verts.length-1].y }
+  ],{render:{
+      fillStyle: col
+    }});
+  parts.push(body);
+
+  const ret = Body.create(options);
+  Body.setParts(ret, parts);
+  Body.translate(ret, {x: x, y: y});
+
+  return ret;
+}
+/*
+const vertices = [
+  { x: 100, y: 100 },
+  { x: 500, y: 200 },
+  { x: 500, y: 500 },
+  { x: 100, y: 500 },
+];
+Composite.add(engine.world, createMap(400,400,vertices,25,25,{isStatic:true}))
+
+ */
+mapButton = document.getElementById("mapButton");
+mapMode = false;
+tmpVerts = [];
+tmpCircles = [];
+mapButton.addEventListener("click", function(){
+  if(mapMode) {exitMapMode()}
+  else{mapMode = true}
+});
+
+function exitMapMode(){
+  newMap = createMap(0,0,tmpVerts,25,{isStatic:true},"rgb(23,143,25)");
+  console.log(tmpVerts);
+  socket.emit("newMap",tmpVerts,25);
+  Composite.add(engine.world, newMap)
+  for(let i = 0; i < tmpCircles; i++){
+    Composite.remove(engine.world, tmpCircles[i]);
+  }
+  tmpCircles = []
+  tmpVerts = []
+  mapMode = false;
+}
+
+socket.on("updateMap", (verts,radius) => {
+  newMap = createMap(0,0,verts,radius,{isStatic:true},"rgb(23,143,25)");
+  Composite.add(engine.world, newMap)
+  for(let i = 0; i < tmpCircles; i++){
+    Composite.remove(engine.world, tmpCircles[i]);
+  }
+  tmpCircles = []
+  tmpVerts = []
+  mapMode = false;
+})

@@ -63,6 +63,7 @@ class Game{
 
 
         this.ground = this.Bodies.rectangle(400, 610, 810, 60, { isStatic: true});
+        /*
         this.g1 = this.Bodies.rectangle(800, 400, 30, 600, { isStatic: true});
         this.g2 = this.Bodies.rectangle(400, 450, 30, 355, { isStatic: true});
         this.g3 = this.Bodies.rectangle(400, 400, 500, 30, { isStatic: true});
@@ -71,6 +72,8 @@ class Game{
         this.g5 = this.Bodies.circle(400, 125, 30, { isStatic: true});
 
         this.Composite.add(this.engine.world, [this.ground,this.g1,this.g2,this.g3,this.g4,this.g5,this.g6]);
+
+         */
 
     }
 
@@ -238,5 +241,50 @@ io.on('connection', (socket) => {
         }
         console.log('user disconnected');
     });
+    socket.on("newMap",(verts,radius) =>{
+        newMap = createMap(0,0,verts,radius,{isStatic:true},"rgb(23,143,25)");
+        games[socket.code].Composite.add(games[socket.code].engine.world,newMap);
+        socket.to(socket.code).emit('updateMap',verts,radius);
+    });
 });
 
+function createMap(x,y, verts, width, options,col) {
+    Bodies = Matter.Bodies; //change structure later :P
+    Body = Matter.Body; //change structure later :P
+
+    const parts = [];
+    for(let i = 1; i < verts.length; i++) {
+        m = (verts[i-1].y-verts[i].y)/(verts[i-1].x-verts[i].x); //slope
+        normal = -1/m; //perpendicular line of slope
+        angle = Math.atan(normal); //angle of normal in radians
+
+        const body = Bodies.fromVertices((verts[i-1].x + verts[i].x)/2,(verts[i-1].y+verts[i].y)/2, [
+            { x: verts[i-1].x , y: verts[i-1].y },
+            { x: verts[i-1].x +width*Math.cos(angle), y: verts[i-1].y+width*Math.sin(angle) },
+            { x: verts[i].x +width*Math.cos(angle), y: verts[i].y+width*Math.sin(angle) },
+            { x: verts[i].x , y: verts[i].y }
+        ],{render:{
+                fillStyle: col
+            }});
+        parts.push(body);
+    }
+    //catches the last edge :P
+    m = (verts[verts.length-1].y-verts[0].y)/(verts[verts.length-1].x-verts[0].x);
+    normal = -1/m;
+    angle = Math.atan(normal);
+    const body = Bodies.fromVertices((verts[0].x+verts[verts.length-1].x)/2,(verts[0].y+verts[verts.length-1].y)/2, [
+        { x: verts[0].x , y: verts[0].y },
+        { x: verts[0].x +width*Math.cos(angle), y: verts[0].y+width*Math.sin(angle) },
+        { x: verts[verts.length-1].x +width*Math.cos(angle), y: verts[verts.length-1].y+width*Math.sin(angle) },
+        { x: verts[verts.length-1].x , y: verts[verts.length-1].y }
+    ],{render:{
+            fillStyle: col
+        }});
+    parts.push(body);
+
+    const ret = Body.create(options);
+    Body.setParts(ret, parts);
+    Body.translate(ret, {x: x, y: y});
+
+    return ret;
+}
