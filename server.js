@@ -205,8 +205,6 @@ setInterval(() => {
     }, 16.666);
 
 
-
-
 io.on('connection', (socket) => {
     socket.on('newPlayer', (room,name,color) => {
         socket.code = room;
