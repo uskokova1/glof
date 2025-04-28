@@ -54,6 +54,7 @@ mouseConstraint = Matter.MouseConstraint.create(engine, {
 Composite.add(engine.world, mouseConstraint);
 segIndex = 0;
 document.getElementById("edit").addEventListener("click", function() {
+    console.log(circles);
     if(segments[segIndex] == null){
         exitMapMode();
     }
@@ -62,12 +63,21 @@ document.getElementById("edit").addEventListener("click", function() {
     mode = "Edit";
 });
 document.getElementById("create").addEventListener("click", function() {
-    segIndex++;
+    console.log(circles);
+    for(let i = 0; i < tmpCircles.length; i++){
+        tmpCircles[i].render.fillStyle = "black";
+    }
+    while(circles[segIndex] != null){
+        segIndex++;
+    }
+
     mode = "Create";
     tmpVerts = [];
     tmpCircles = [];
 });
 document.getElementById("cycle").addEventListener("click", function() {
+    console.log(circles);
+    circles[segIndex] = tmpCircles;
     segIndex++;
     if(circles[segIndex] == undefined ) {
         segIndex = 0;
@@ -100,9 +110,6 @@ canvas.addEventListener('click', function (e) { //on click, gets the mouse X and
         c1 = Matter.Bodies.circle(e.clientX,e.clientY,25/2,{frictionAir:1});
         Composite.add(engine.world, c1);
         tmpCircles.push(c1);
-    }
-    if(mode == "Edit"){
-        Composite.add(engine.world, mouseConstraint);
     }
 });
 
@@ -153,6 +160,7 @@ function createMap(x,y, verts, width, options,col) {
 tmpVerts = [];
 tmpCircles = [];
 function exitMapMode(){
+    tmpVerts = [];
     for(let i = 0; i < tmpCircles.length; i++){
         tmpVerts[i] = {x:tmpCircles[i].position.x, y:tmpCircles[i].position.y};
         //Composite.remove(engine.world, tmpCircles[i]);
