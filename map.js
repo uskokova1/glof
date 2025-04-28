@@ -91,7 +91,16 @@ document.getElementById("cycle").addEventListener("click", function() {
         tmpCircles[i].render.fillStyle = "white";
     }
 });
-
+document.getElementById("delete").addEventListener("click", function() {
+    Composite.remove(engine.world,segments[segIndex]);
+    for(let i = 0; i < tmpCircles.length; i++){
+        Composite.remove(engine.world,tmpCircles[i]);
+    }
+    segments = segments.splice(segIndex, 1);
+    circles = circles.splice(segIndex, 1);
+    console.log(circles);
+    segIndex++;
+});
 
 circles = [];
 segments = [];
