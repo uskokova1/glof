@@ -263,13 +263,4 @@ socket.on("updateMap", (verts, radius) => {
   mapMode = false;
 });
 
-const mysql = require('mysql2');
-//Create a connection pool with mySQL server credentials and database name
-const conPool = mysql.createPool({
-  host: '35.237.125.25',
-  user: 'nodeuser',
-  password: 'mysqlguys',
-  database: 'Maps',
-  connectionLimit: 10
-});
 

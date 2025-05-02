@@ -21,12 +21,36 @@
 
         <div class="button-group">
             <input type="submit" value="Join Game" class="join-btn">
-            <button type="button" class="host-btn" disabled>Host Game</button>
         </div>
+        <button type="button" id="resetdb" >resetdb</button>
+        <button type="button" id="showdb" >showdb</button>
     </form>
         <form action="/map.html" class="menu-form">
         <input type="submit" value="Map" class="join-btn">
             </form>
+    </form>
+    <form action="/hostpage.html" class="menu-form">
+        <input type="submit" value="Host" class="join-btn">
+    </form>
+    <script>
+        ajax = new XMLHttpRequest();
+        //ajax.open('POST', '/sql');
+
+        document.getElementById('resetdb').addEventListener('click', (e) => {
+            ajax.open('POST', '/sql');
+            ajax.send("DELETE FROM map WHERE id >= 1");
+        });
+        document.getElementById('showdb').addEventListener('click', (e) => {
+            ajax.open('POST', '/sql');
+            ajax.send("SHOW DATABASES;");
+        });
+        ajax.addEventListener("loadend", ()=>{
+            document.getElementById('db').innerHTML = ajax.responseText;
+        });
+    </script>
+    <div id="db">
+
+    </div>
 </div>
 </body>
 </html>

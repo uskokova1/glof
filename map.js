@@ -193,3 +193,31 @@ function exitMapMode() {
   //tmpVerts = []
 }
 
+ajax = new XMLHttpRequest();
+
+document.getElementById("upload").addEventListener("click", function (event) {
+  ajax.open('POST', '/sql');
+  for(i = 0; i < tmpVerts[i].length; i++) {
+    tmpVerts[i] = {x: Math.round(tmpVerts[i].x), y: Math.round(tmpVerts[i].y)};
+  }
+  console.log(tmpVerts);
+  mapname = document.getElementById("name").value;
+
+  console.log("insert into map(mapName,spawnx,spawny,holex,holey,verts)" +
+      " values("+
+      "\""+mapname+"\"" +","+
+      spawn.position.x+"," +
+      spawn.position.y+","+
+      hole.position.x+"," +
+      hole.position.y+","+
+      "\""+JSON.stringify(tmpVerts)+"\""+");");
+  ajax.send(
+      "insert into map(mapName,spawnx,spawny,holex,holey,verts)" +
+      " values("+
+      "\""+mapname+"\"" +","+
+      spawn.position.x+"," +
+      spawn.position.y+","+
+      hole.position.x+"," +
+      hole.position.y+","+
+      "\'"+JSON.stringify(tmpVerts)+"\'"+");");
+})

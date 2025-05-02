@@ -3,7 +3,20 @@ const url = require('url');
 const fs = require('fs');
 const path = require('path');
 const Matter = require("matter-js");
+const mysql = require('mysql2');
 
+const conPool = mysql.createPool({
+    host: '35.237.125.25',
+    user: 'nodeuser',
+    password: 'mysqlguys',
+    database: 'mapsdb',
+    connectionLimit: 10
+});
+
+conPool.query("select spawnx from map;",(err,results,fields)=>{
+    console.log(results);
+    console.log(err);
+});
 //players = {};
 games = {};
 
@@ -130,6 +143,21 @@ const myserver = http.createServer(function (req, res) {
     switch(urlObj.pathname.slice(1)){
         case "data": //each case will be a queury such as cancel or schedule from the homework
             writeEnd("Day not valid");
+            break;
+        case "sql":
+            cmd = "";
+            req.on('data', data => {cmd += data;}); // get the request data
+            req.on('end', () => { // request data received – call route processing function
+                console.log(cmd);
+                conPool.query(cmd,(err,results,fields)=>{
+                    res.writeHead(200, {"Content-Type": "app/json"});
+                    if(err) res.write("sql error");
+                    else res.write(JSON.stringify(results));
+                    console.log(results);
+                    console.log(err);
+                    res.end();
+                });
+            });
             break;
         case "frontend.html":
             //console.log(urlObj.pathname);
@@ -286,3 +314,4 @@ function createMap(x,y, verts, width, options,col) {
 
     return ret;
 }
+
