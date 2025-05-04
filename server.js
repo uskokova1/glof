@@ -28,8 +28,11 @@ class Game{
         this.code = code;
         games[code] = this;
 
+        this.obstacles = [];
+        this.index = 1;
+
         //adding a hole for the glof ball to go int
-        this.hole = this.Bodies.circle(500, 500, 0.05, {
+        this.hole = this.Bodies.circle(900, 500, 0.05, {
             isStatic: true,
             isSensor: true,
             render: {
@@ -62,15 +65,13 @@ class Game{
         });
 
 
-        this.ground = this.Bodies.rectangle(400, 610, 810, 60, { isStatic: true});
-        this.g1 = this.Bodies.rectangle(800, 400, 30, 600, { isStatic: true});
-        this.g2 = this.Bodies.rectangle(400, 450, 30, 355, { isStatic: true});
-        this.g3 = this.Bodies.rectangle(400, 400, 500, 30, { isStatic: true});
-        this.g4 = this.Bodies.rectangle(400, 100, 850, 30, { isStatic: true});
-        this.g6 = this.Bodies.rectangle(0, 300, 30, 600, { isStatic: true});
-        this.g5 = this.Bodies.circle(400, 125, 30, { isStatic: true});
 
-        this.Composite.add(this.engine.world, [this.ground,this.g1,this.g2,this.g3,this.g4,this.g5,this.g6]);
+        //this.g6 = this.Bodies.rectangle(0, 300, 30, 600, { isStatic: true});
+        //this.g5 = this.Bodies.circle(400, 125, 30, { isStatic: true});
+
+
+
+        //this.Composite.add(this.engine.world, [this.ground,this.g1,this.g2,this.g3,this.g4,this.g5,this.g6]);
 
     }
 
@@ -201,7 +202,18 @@ setInterval(() => {
     }
     }, 16.666);
 
-
+let shapes = [ //SHAPES ARE JUST THE WALLS IN THE WORLD
+    [200, 610,425, 30], //Ground
+    [800, 350, 30, 500], //Right Wall
+    [400, 600, 30, 600], //Middle Wall
+    [400, 400, 500, 30], //Horizontal middle Bar
+    [400, 100, 850, 30], //Top
+    [0, 300, 30, 600],   //Left Wall
+    [600, 800,425, 30],  //Bottom Most Ground(right side)
+    [29, 30, 31, 32],
+    [33, 34, 35, 36],
+    [37, 38, 39, 40]
+];
 
 
 io.on('connection', (socket) => {
@@ -217,7 +229,58 @@ io.on('connection', (socket) => {
                     restitution:0.8
                 }),name,color
             ));
+        //This BElow is important code for updated new players with current obstacle postions
+        /*
+        for (let key in obstacles) {
+            let obstacle = obstacles[key];
+            let width2 = obstacle.bounds.max.x - obstacle.bounds.min.x;
+            let height2 = obstacle.bounds.max.y - obstacle.bounds.min.y;
+            socket.to(socket.code).emit('createObstacle', obstacle[draggableBox.position.x,draggableBox.position.y,width2,height2]);
+        }
+
+
+         */
+        //BELOW IS TEST SQUARE CODE CAN BE DELETED
+        let testsquare1 = [400,500,50,100];
+        socket.emit('CreateWall',testsquare1[0],testsquare1[1],testsquare1[2],testsquare1[3]);
+        const wall = Matter.Bodies.rectangle(testsquare1[0],testsquare1[1],testsquare1[2],testsquare1[3], {isStatic:true});
+        const currentgame = games[socket.code];
+        games[socket.code].Composite.add(games[socket.code].engine.world, [wall]);
+
+        //Below will go through list of shapes and emit each to the client side then add them to the server side engine as rectangles
+        for (let i = 0; i < shapes.length; i++) {
+            console.log(`item ${i + 1}`);
+            socket.emit('CreateWall',shapes[i][0],shapes[i][1],shapes[i][2],shapes[i][3]);
+            games[socket.code].Composite.add(games[socket.code].engine.world, [Matter.Bodies.rectangle(shapes[i][0],shapes[i][1],shapes[i][2],shapes[i][3],{isStatic:true})]);
+        }
+
+
+
+    });//end of newPlayer Socket
+
+    // THIS CODE will create obstacle postions recieved from the client then send the new ones to the other players
+    socket.on('createObstacle', (x2,y2,Width,Hight) =>{
+        console.log("createObstacle");
+        index = games[socket.code].index; // don't know why these shortcuts I made dont work
+        //obstacles = [socket.code].obstacles; // don't know why these shortcuts I made dont work
+        games[socket.code].obstacles["Obstacle" + index] = Matter.Bodies.rectangle(x2,y2,Width,Hight, {
+            isStatic: true,
+            render: { fillStyle: "grey"}
+        });
+        //Matter.Body.setAngle(obstacles["Obstacle" + index], Angle);
+
+
+        console.log(x2,y2,Width,Hight);
+        socket.to(socket.code).emit('createObstacle', x2,y2,Width,Hight);
+        games[socket.code].Composite.add(games[socket.code].engine.world,games[socket.code].obstacles["Obstacle" + index]);
+        index++;
     });
+
+
+
+
+
+
     console.log(socket.id);
 
     socket.on('requestPlayer', (sock,room) => {
