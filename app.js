@@ -214,6 +214,7 @@ socket.on('playerScored', (sock) => {
 let obstacles = {}
 let index = 1
 socket.on('createObstacle', (x2,y2,Width,Hight) =>{
+  console.log("Recieved Obstacle CREATING")
   obstacles["Obstacle" + index] = Matter.Bodies.rectangle(x2,y2,Width,Hight, {
     isStatic: true,
     render: { fillStyle: "grey"}

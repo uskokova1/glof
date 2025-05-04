@@ -29,7 +29,7 @@ class Game{
         games[code] = this;
 
         this.obstacles = [];
-        this.index = 1;
+        this.index = 0;
 
         //adding a hole for the glof ball to go int
         this.hole = this.Bodies.circle(900, 500, 0.05, {
@@ -230,26 +230,51 @@ io.on('connection', (socket) => {
                 }),name,color
             ));
         //This BElow is important code for updated new players with current obstacle postions
+        let indexCounter = games[socket.code].index
+        let indexCounter2 = (games[socket.code].index -1)
+        console.log("There are currently: ",indexCounter, " obstacles in game room");
+
+        if (indexCounter > 0) {
+            console.log("LOADING CURRENTLY PLACED OBSTACLES")
+            for (let i = 0; i < indexCounter; i++) {
+                console.log("back at the TOP")
+                socket.to(socket.code).emit('createObstacle',);
+                console.log(indexCounter);
+                let currentObstacle = games[socket.code].obstacles["Obstacle" + i];
+                console.log(i,'The current Obstacle is: ', games[socket.code].obstacles["Obstacle" + i]);
+                let width2 = currentObstacle.bounds.max.x - currentObstacle.bounds.min.x;
+                let height2 = currentObstacle.bounds.max.y - currentObstacle.bounds.min.y;
+
+                socket.emit('createObstacle',currentObstacle.position.x,currentObstacle.position.y,width2,height2);
+                console.log("MADE IT HERE",i);
+            }
+
+        }
+
+
         /*
         for (let key in obstacles) {
             let obstacle = obstacles[key];
             let width2 = obstacle.bounds.max.x - obstacle.bounds.min.x;
             let height2 = obstacle.bounds.max.y - obstacle.bounds.min.y;
             socket.to(socket.code).emit('createObstacle', obstacle[draggableBox.position.x,draggableBox.position.y,width2,height2]);
-        }
+
 
 
          */
         //BELOW IS TEST SQUARE CODE CAN BE DELETED
+        /*
         let testsquare1 = [400,500,50,100];
         socket.emit('CreateWall',testsquare1[0],testsquare1[1],testsquare1[2],testsquare1[3]);
         const wall = Matter.Bodies.rectangle(testsquare1[0],testsquare1[1],testsquare1[2],testsquare1[3], {isStatic:true});
         const currentgame = games[socket.code];
         games[socket.code].Composite.add(games[socket.code].engine.world, [wall]);
 
-        //Below will go through list of shapes and emit each to the client side then add them to the server side engine as rectangles
+
+         */
+        //Below will go through list of shapes(WALLS/MAP) and emit each to the client side then add them to the server side engine as rectangles
         for (let i = 0; i < shapes.length; i++) {
-            console.log(`item ${i + 1}`);
+            //console.log(`item ${i + 1}`);
             socket.emit('CreateWall',shapes[i][0],shapes[i][1],shapes[i][2],shapes[i][3]);
             games[socket.code].Composite.add(games[socket.code].engine.world, [Matter.Bodies.rectangle(shapes[i][0],shapes[i][1],shapes[i][2],shapes[i][3],{isStatic:true})]);
         }
@@ -269,11 +294,12 @@ io.on('connection', (socket) => {
         });
         //Matter.Body.setAngle(obstacles["Obstacle" + index], Angle);
 
-
+        index = games[socket.code].index;
         console.log(x2,y2,Width,Hight);
         socket.to(socket.code).emit('createObstacle', x2,y2,Width,Hight);
         games[socket.code].Composite.add(games[socket.code].engine.world,games[socket.code].obstacles["Obstacle" + index]);
-        index++;
+        games[socket.code].index++;
+        console.log(games[socket.code].index);
     });
 
 
