@@ -194,30 +194,54 @@ function exitMapMode() {
 }
 
 ajax = new XMLHttpRequest();
+const socket = io.connect('ws://localhost');
 
 document.getElementById("upload").addEventListener("click", function (event) {
-  ajax.open('POST', '/sql');
-  for(i = 0; i < tmpVerts[i].length; i++) {
-    tmpVerts[i] = {x: Math.round(tmpVerts[i].x), y: Math.round(tmpVerts[i].y)};
-  }
-  console.log(tmpVerts);
   mapname = document.getElementById("name").value;
 
-  console.log("insert into map(mapName,spawnx,spawny,holex,holey,verts)" +
-      " values("+
-      "\""+mapname+"\"" +","+
-      spawn.position.x+"," +
-      spawn.position.y+","+
-      hole.position.x+"," +
-      hole.position.y+","+
-      "\""+JSON.stringify(tmpVerts)+"\""+");");
-  ajax.send(
-      "insert into map(mapName,spawnx,spawny,holex,holey,verts)" +
-      " values("+
-      "\""+mapname+"\"" +","+
-      spawn.position.x+"," +
-      spawn.position.y+","+
-      hole.position.x+"," +
-      hole.position.y+","+
-      "\'"+JSON.stringify(tmpVerts)+"\'"+");");
-})
+  ajax.open("POST", "/sql");
+  ajax.send("SELECT * FROM maps where mapName=\""+mapname+"\";");
+
+});
+
+ajax.onload = function () {
+  console.log(ajax.responseText);
+  if(ajax.responseText != "[]"){
+    document.getElementById("name").value = "name taken :P"
+  } else {
+    mapTable = "insert into maps(mapName,lenSegs,spawnPos,holePos) values (\"" + mapname + "\",\"[";
+    for (let i = 0; i < circles.length; i++) {
+      insertValsString = "\"" + mapname + "\",";
+      insertString = "insert into SegWith" + circles[i].length + "(MapOwner,";
+      createString = "create table if not exists SegWith" + circles[i].length + "(MapOwner varchar(50),";
+      for (let j = 0; j < circles[i].length; j++) {
+        insertString += "x" + j + "," + "y" + j + ",";
+        insertValsString += circles[i][j].position.x + "," + circles[i][j].position.y + ",";
+        createString += "x" + j + " float," + "y" + j + " float,";
+      }
+      insertString = insertString.substring(0, insertString.length - 1);
+      insertValsString = insertValsString.substring(0, insertValsString.length - 1);
+      createString = createString.substring(0, createString.length - 1);
+      insertValsString += ");"
+      insertString += ") values (" + insertValsString;
+      createString += ");"
+
+      socket.emit("uploadMap", createString,insertString);
+
+      mapTable += circles[i].length + ",";
+    }
+    mapTable = mapTable.substring(0, mapTable.length - 1);
+    mapTable += "]\", ";
+
+    spawn.position.x = Math.round(spawn.position.x);
+    spawn.position.y = Math.round(spawn.position.y);
+    hole.position.x = Math.round(hole.position.x);
+    hole.position.y = Math.round(hole.position.y);
+
+    mapTable += "\"[" + spawn.position.x + "," + spawn.position.y + "]\",";
+    mapTable += "\"[" + hole.position.x + "," + hole.position.y + "]\");";
+    socket.emit("sqlcmd", mapTable);
+
+    console.log(mapTable);
+  }
+}

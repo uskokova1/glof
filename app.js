@@ -56,16 +56,22 @@ Composite.add(engine.world, [ground,g1,g2,g3,g4,g5,g6]);
 
 
  */
+const socket = io.connect('ws://localhost');
+
+
 
 //so that the hole is visible on the frontend
-var hole = Bodies.circle(500, 500, 19, {
-  isStatic: true,
-  isSensor: true,
-  render: {
-    fillStyle: "black"
-  }
+socket.on("createHole",(x,y)=>{
+  var hole = Bodies.circle(x, y, 19, {
+    isStatic: true,
+    isSensor: true,
+    render: {
+      fillStyle: "black"
+    }
+  });
+  Composite.add(engine.world, hole);
 });
-Composite.add(engine.world, hole);
+
 
 // run the renderer
 Render.run(render);
@@ -84,13 +90,17 @@ canvas.style.left = '0px';
 canvas.style.top = '0px';
 
 canvas.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
+  /*
   if (mapMode) {
     tmpVerts.push({ x: e.clientX, y: e.clientY });
     c1 = Matter.Bodies.circle(e.clientX, e.clientY, 25 / 2, { isStatic: true });
     Composite.add(engine.world, c1);
     tmpCircles.push(c1);
   }
-  else { pushBall(e) }
+  else {
+  pushBall(e) }
+   */
+  pushBall(e)
 });
 
 function pushBall(e) {
@@ -116,8 +126,6 @@ function pushBall(e) {
 players = {
 
 };
-
-const socket = io.connect('ws://localhost');
 
 const urlParams = new URLSearchParams(window.location.search);
 const room = urlParams.get('room');
@@ -229,7 +237,6 @@ const vertices = [
 ];
 Composite.add(engine.world, createMap(400,400,vertices,25,25,{isStatic:true}))
 
- */
 mapButton = document.getElementById("mapButton");
 mapMode = false;
 tmpVerts = [];
@@ -262,5 +269,11 @@ socket.on("updateMap", (verts, radius) => {
   tmpVerts = []
   mapMode = false;
 });
-
-
+ */
+socket.on("mapSegment", (verts) => {
+  verts = JSON.parse(verts);
+  for(i = 0; i < verts.length; i++) {
+    newMap = createMap(0, 0, verts[i], 25, {isStatic: true}, "rgb(23,143,25)");
+    Composite.add(engine.world, newMap)
+  }
+});

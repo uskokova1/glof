@@ -40,7 +40,7 @@ canvas.style.top = '0px';
 canvas.style.zIndex = '-5';
 
 
-
+const socket = io.connect('ws://localhost');
 
 
 mapObj = null
@@ -48,7 +48,7 @@ hole = null
 spawn = null
 ajax = new XMLHttpRequest();
 ajax.open('POST', '/sql');
-ajax.send("select id,mapname from map");
+ajax.send("select mapName from maps");
 maplist = document.getElementById('maps');
 console.log(maplist);
 loaded = 0;
@@ -56,42 +56,59 @@ ajax.addEventListener("loadend", ()=>{
     maps = JSON.parse(ajax.responseText);
     console.log(maps);
     console.log(maps.length);
-    if(maps.length >= loaded){
+    if(maps.length > loaded){
         for(i = 0; i < maps.length; i++){
             maplist.innerHTML +=
-                "<li id = "+ maps[i].id+ " onClick=clickedMap(this.id)>"
-                +maps[i].mapname+
+                "<li id = \'"+ maps[i].mapName+ "\' onClick=clickedMap(this.id)>"
+                +maps[i].mapName+
                 "</li>";
             loaded++;
         }
     }
     else{
         map = maps[0]
-        console.log(map);
-        verts = JSON.parse(map.verts);
-        console.log(verts);
-        //if(map) Composite.remove(engine.world, map);
-        mapObj = createMap(0,0,verts,25,{ isStatic: true }, "rgb(23,143,25)")
-        Composite.add(engine.world, mapObj);
-        spawn = Bodies.circle(map.spawnx, map.spawny, 25);
+        //console.log(map);
+
+        socket.emit("iwantalltheverts", map.mapName, JSON.parse(map.lenSegs));
+
+        spawn = JSON.parse(map.spawnPos);
+        hole = JSON.parse(map.holePos);
+
+        spawn = Bodies.circle(spawn[0], spawn[1], 25);
         spawn.render.fillStyle = "white";
         Composite.add(engine.world, spawn);
-        hole = Bodies.circle(map.holex, map.holey, 15);
+        hole = Bodies.circle(hole[0], hole[1], 15);
         hole.render.fillStyle = "red";
         Composite.add(engine.world, hole);
     }
 });
 
-function clickedMap(id){
-    if(hole)
-        Composite.remove(engine.world, [mapObj,hole,spawn]);
+function clickedMap(mapName){
+    if(hole) {
+        Composite.remove(engine.world, [hole, spawn]);
+        for(i = 0; i < segments.length; i++){
+            Composite.remove(engine.world, segments[i]);
+        }
+        segments = [];
+    }
     ajax.open('POST', '/sql');
-    ajax.send("select * from map where id="+id+";");
+    //console.log(mapName)
+    ajax.send("select * from maps where mapName=\""+mapName.toString()+"\";");
 }
-
-
-
-
+segments = [];
+socket.on("hereyougo", (verts) =>{
+    tmpVerts = [];
+    verts = JSON.parse(verts);
+    console.log(verts);
+    for(j = 0; j < verts.length; j++){
+        for(i = 0; verts[j]["x"+i] != null; i++){
+            tmpVerts[i] = {x:verts[j]["x"+i],y:verts[j]["y"+i]};
+        }
+        mapObj = createMap(0,0,tmpVerts,25,{ isStatic: true }, "rgb(23,143,25)");
+        segments.push(mapObj);
+        Composite.add(engine.world, mapObj);
+    }
+});
 
 
 function createMap(x, y, verts, width, options, col) {
