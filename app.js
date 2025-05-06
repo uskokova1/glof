@@ -30,14 +30,28 @@ var render = Render.create({
 
 //BELOW Is all about obstacles
 const CATEGORY_DRAGGABLE = 0x0002;
+let bool1 = false;
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
 
 function SpawnObstacle() {
   let obstaclePreset = [
     [50,50], //First obstacle preset. Obstacle number 1
-    [50,50]
+    [30,100],
+    [70,30],
+    [30,70],
+    [20,30],
+    [40,40],
+    [30,100]
   ]
+  let ObstacleChoice = getRandomInt(6);
+  console.log(ObstacleChoice);
+
+
 //Creates a draggable box just a normal box
-  let draggableBox = Bodies.rectangle(300, 300, obstaclePreset[0][0], obstaclePreset[0][1], {
+  let draggableBox = Bodies.rectangle(300, 300, obstaclePreset[ObstacleChoice][0], obstaclePreset[ObstacleChoice][1], {
     isStatic: false,
     inertia: Infinity,
     collisionFilter: {
@@ -55,11 +69,19 @@ function SpawnObstacle() {
       socket.emit("createObstacle",draggableBox.position.x,draggableBox.position.y,obstaclePreset[0][0],obstaclePreset[0][1]);// Send the draggable box information to the server
     }
   });
-
-
+}
+/*
+function DeleteObstacle() {
+  Matter.Events.on(mouseConstraint, "enddrag", function(event) {
+    if (event.body === draggableBox) {
+      Matter.Body.setStatic(draggableBox, true);
+      draggableBox.render.fillStyle = 'grey'; // once an object is active you must refrence it a different way than Matter.body
+      socket.emit("createObstacle",draggableBox.position.x,draggableBox.position.y,obstaclePreset[0][0],obstaclePreset[0][1]);// Send the draggable box information to the server
+    }
+  });
 }
 
-
+ */
 
 
 // makes the mouse renderer used to track mouse and then drag objects
@@ -136,6 +158,12 @@ canvas.style.left = '0px';
 canvas.style.top = '0px';
 
 document.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
+  if (mouseConstraint.body) { //this determines if a body is currently being moved by the mouse constraint if so exit click event
+    console.log("it worked");
+    return;
+  }
+  if (e.target.tagName === 'BUTTON') return; //THIS SECTION determines if what you clicked on is a button or not.
+
   myBall = players[socket.id].ballObj
   bounds = canvas.getBoundingClientRect();
   relX = e.clientX - bounds.left - myBall.position.x;
@@ -156,8 +184,10 @@ document.addEventListener('click', function (e) { //on click, gets the mouse X a
 
    */
 
+  if (!bool1){
+    socket.emit('click', pos, force, socket.id);
+  }
 
-  socket.emit('click', pos, force, socket.id);
   //Matter.Body.applyForce(myBall, pos, force);
 });
 
