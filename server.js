@@ -243,8 +243,6 @@ class Player
 
 }
 
-
-
 function processSql(req,res){
     console.log("im being called!");
     cmd = "";
@@ -333,13 +331,6 @@ io.on('connection', (socket) => {
         }
         console.log('user disconnected');
     });
-    /*
-    socket.on("newMap",(verts,radius) =>{
-        newMap = createMap(0,0,verts,radius,{isStatic:true},"rgb(23,143,25)");
-        games[socket.code].Composite.add(games[socket.code].engine.world,newMap);
-        socket.to(socket.code).emit('updateMap',verts,radius);
-    });
-     */
 
     socket.on("uploadMap", (cmd1,cmd2)=>{
         console.log(cmd1);

@@ -51,23 +51,6 @@
         document.getElementById("map").addEventListener("click", function(event) {
             window.location.replace("map.html");
         });
-        /*
-        ajax = new XMLHttpRequest();
-        //ajax.open('POST', '/sql');
-
-        document.getElementById('resetdb').addEventListener('click', (e) => {
-            ajax.open('POST', '/sql');
-            ajax.send("DELETE FROM map WHERE id >= 1");
-        });
-        document.getElementById('showdb').addEventListener('click', (e) => {
-            ajax.open('POST', '/sql');
-            ajax.send("SHOW DATABASES;");
-        });
-        ajax.addEventListener("loadend", ()=>{
-            document.getElementById('db').innerHTML = ajax.responseText;
-        });
-
-         */
     </script>
     <div id="db">
 

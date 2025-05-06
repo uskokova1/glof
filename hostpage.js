@@ -46,6 +46,7 @@ const name = urlParams.get('nick');
 let color = window.location.hash;
 host = false;
 const socket = io.connect('ws://localhost');
+players = document.getElementById("players");
 socket.on('connect', ()=>{
     if(!room){
         host = true;
@@ -55,7 +56,7 @@ socket.on('connect', ()=>{
         code = room;
     }
     socket.emit('joinRoom', code);
-    document.getElementById("code").innerHTML = code;
+    document.getElementById("code").innerHTML += code;
 });
 
 document.getElementById("start").addEventListener("click", function() {

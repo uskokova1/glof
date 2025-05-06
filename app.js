@@ -228,48 +228,6 @@ function createMap(x, y, verts, width, options, col) {
 
   return ret;
 }
-/*
-const vertices = [
-  { x: 100, y: 100 },
-  { x: 500, y: 200 },
-  { x: 500, y: 500 },
-  { x: 100, y: 500 },
-];
-Composite.add(engine.world, createMap(400,400,vertices,25,25,{isStatic:true}))
-
-mapButton = document.getElementById("mapButton");
-mapMode = false;
-tmpVerts = [];
-tmpCircles = [];
-mapButton.addEventListener("click", function () {
-  if (mapMode) { exitMapMode() }
-  else { mapMode = true }
-});
-
-function exitMapMode() {
-  newMap = createMap(0, 0, tmpVerts, 25, { isStatic: true }, "rgb(23,143,25)");
-  console.log(tmpVerts);
-  socket.emit("newMap", tmpVerts, 25);
-  Composite.add(engine.world, newMap)
-  for (let i = 0; i < tmpCircles; i++) {
-    Composite.remove(engine.world, tmpCircles[i]);
-  }
-  tmpCircles = []
-  tmpVerts = []
-  mapMode = false;
-}
-
-socket.on("updateMap", (verts, radius) => {
-  newMap = createMap(0, 0, verts, radius, { isStatic: true }, "rgb(23,143,25)");
-  Composite.add(engine.world, newMap)
-  for (let i = 0; i < tmpCircles; i++) {
-    Composite.remove(engine.world, tmpCircles[i]);
-  }
-  tmpCircles = []
-  tmpVerts = []
-  mapMode = false;
-});
- */
 
 socket.on("mapSegment", (verts) => {
     //console.log(verts);

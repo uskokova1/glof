@@ -3,14 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <title>hostpage :D</title>
+    <style>
+        body{
+            display: inline-block;
+            align-items: center;
+        }
+        ul{
+            font-size: 20px;
+            padding: 3px;
+            margin: 55px;
+        }
+        li{
+            box-shadow: black 0px 0px 1px;
+        }
+        li:hover{
+            color: bisque;
+            scale: 120%;
+        }
+        li:active {
+            scale: 125%;
+        }
+        p1{
+            margin: 25px;
+            font-size: 25px;
+            font-weight: bold;
+        }
+        button{
+            margin-left: 120px;
+            background: red;
+            color: white;
+            font-size: 25px;
+        }
+        button:hover{
+            background: orangered;
+            scale: 125%;
+        }
+    </style>
     <script src="../node_modules/socket.io/client-dist/socket.io.js"></script>
     <script src="node_modules/matter-js/build/matter.js"></script>
 </head>
 <body>
     <ul id="maps">
     </ul>
-    <button id="start">Start Game</button>
-    <p1 id="code"></p1>
+    <div>
+        <button id="start">Start Game</button>
+    </div>
+    <p1 id="code">Code: </p1>
+    <ul id="players">
+    </ul>
     <script src = "hostpage.js"></script>
 </body>
 </html>
