@@ -66,7 +66,7 @@ function SpawnObstacle() {
     if (event.body === draggableBox) {
       Matter.Body.setStatic(draggableBox, true);
       draggableBox.render.fillStyle = 'grey'; // once an object is active you must refrence it a different way than Matter.body
-      socket.emit("createObstacle",draggableBox.position.x,draggableBox.position.y,obstaclePreset[0][0],obstaclePreset[0][1]);// Send the draggable box information to the server
+      socket.emit("createObstacle",draggableBox.position.x,draggableBox.position.y,obstaclePreset[ObstacleChoice][0],obstaclePreset[ObstacleChoice][1]);// Send the draggable box information to the server
     }
   });
 }
