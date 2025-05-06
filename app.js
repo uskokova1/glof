@@ -130,7 +130,7 @@ players = {
 const urlParams = new URLSearchParams(window.location.search);
 const room = urlParams.get('room');
 const name = urlParams.get('nick');
-const color = urlParams.get('color');
+const color = window.location.hash;
 socket.emit("newPlayer", room, name, color);
 //socket.emit("requestMap");       so that when you reload it will request the map state
 
@@ -270,10 +270,15 @@ socket.on("updateMap", (verts, radius) => {
   mapMode = false;
 });
  */
+
 socket.on("mapSegment", (verts) => {
-  verts = JSON.parse(verts);
-  for(i = 0; i < verts.length; i++) {
-    newMap = createMap(0, 0, verts[i], 25, {isStatic: true}, "rgb(23,143,25)");
-    Composite.add(engine.world, newMap)
-  }
+    //console.log(verts);
+    verts = JSON.parse(verts);
+    console.log(verts);
+    for(i = 0; i < verts.length; i++) {
+      //console.log(verts[i]);
+      newMap = createMap(0, 0, verts[i], 25, {isStatic: true}, "rgb(23,143,25)");
+      Composite.add(engine.world, newMap)
+    }
+
 });

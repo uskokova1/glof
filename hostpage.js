@@ -40,7 +40,40 @@ canvas.style.top = '0px';
 canvas.style.zIndex = '-5';
 
 
+const urlParams = new URLSearchParams(window.location.search);
+const room = urlParams.get('room');
+const name = urlParams.get('nick');
+let color = window.location.hash;
+host = false;
 const socket = io.connect('ws://localhost');
+socket.on('connect', ()=>{
+    if(!room){
+        host = true;
+        code = socket.id.substring(socket.id.length - 4, socket.id.length);
+        socket.emit("NewGame", code);
+    }else{
+        code = room;
+    }
+    socket.emit('joinRoom', code);
+    document.getElementById("code").innerHTML = code;
+});
+
+document.getElementById("start").addEventListener("click", function() {
+    if(currMap){
+    if(host){
+        ajax.open("GET", "/start?code="+code);
+        ajax.send();
+        //socket.emit("startGame", code);
+        const color = window.location.hash;
+        window.location.replace("frontend.html?mapName="+currMap+"&nick="+name+"&room="+code+"&color="+color);
+    }
+    }
+});
+socket.on('startGame', ()=>{
+    console.log("Game started");
+    const color = window.location.hash;
+    window.location.replace("frontend.html?nick="+name+"&room="+code+"&color="+color);
+});
 
 
 mapObj = null
@@ -84,16 +117,19 @@ ajax.addEventListener("loadend", ()=>{
 });
 
 function clickedMap(mapName){
-    if(hole) {
-        Composite.remove(engine.world, [hole, spawn]);
-        for(i = 0; i < segments.length; i++){
-            Composite.remove(engine.world, segments[i]);
+    if(host){
+        currMap = mapName;
+        if(hole) {
+            Composite.remove(engine.world, [hole, spawn]);
+            for(i = 0; i < segments.length; i++){
+                Composite.remove(engine.world, segments[i]);
+            }
+            segments = [];
         }
-        segments = [];
+        ajax.open('POST', '/sql');
+        //console.log(mapName)
+        ajax.send("select * from maps where mapName=\""+mapName.toString()+"\";");
     }
-    ajax.open('POST', '/sql');
-    //console.log(mapName)
-    ajax.send("select * from maps where mapName=\""+mapName.toString()+"\";");
 }
 segments = [];
 socket.on("hereyougo", (verts) =>{

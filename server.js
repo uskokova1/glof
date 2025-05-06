@@ -29,11 +29,18 @@ const myserver = http.createServer(function (req, res) {
         case "sql":
             processSql(req,res);
             break;
+        case "hostpage.html":
+            none();
+            break;
+        case "start":
+            io.to(urlObj.query.code).emit("startGame");
+            break;
         case "frontend.html":
             //console.log(urlObj.pathname);
-            if(games[urlObj.query.room] == null) {
+            if(games[urlObj.query.room].map == null) {
+                games[urlObj.query.room].setMap(urlObj.query.mapName);
                 console.log("NEW GAME");
-                new Game(urlObj.query.room,"dacurvve");
+                //new Game(urlObj.query.room,"dacurvve");
                 //createPlayer(urlObj.query.room);
             }
             none();
@@ -92,55 +99,11 @@ const io = require('socket.io')(myserver,{
 });
 
 class Game{
-
-    constructor(code,map)
+    constructor(code)
     {
-        this.map = map;
-
         this.segments = [];
-        conPool.query("select * from maps where mapName=\""+map.toString()+"\";", (e,r,f) => {
-            this.segNum = JSON.parse(r[0].lenSegs);
-            this.spawn = JSON.parse(r[0].spawnPos);
-            this.holePos = JSON.parse(r[0].holePos);
-            for (let z = 0; z < this.segNum.length; z++) {
-                conPool.query("SELECT * FROM SegWith" + this.segNum[z] + " WHERE mapOwner=\"" + map + "\"",
-                    (err, results, fields) => {
-                        //console.log(err);
-                        //console.log(results);
-                        this.tmpVerts = [];
-                        this.verts = results;
-                        console.log(this.verts);
-                        for (let j = 0; j < this.verts.length; j++) {
-                            for (let i = 0; this.verts[j]["x" + i] != null; i++) {
-                                this.tmpVerts[i] = {x: this.verts[j]["x" + i], y: this.verts[j]["y" + i]};
-                            }
-                            this.mapObj = createMap(0, 0, this.tmpVerts, 25, {isStatic: true}, "rgb(23,143,25)");
-                            this.segments.push(this.tmpVerts);
-                            this.Composite.add(this.engine.world, this.mapObj);
-                        }
-                    });
-            }
-            console.log("fejiwofjeoiwfnweufnewiojfiew");
-
-            //adding a hole for the glof ball to go int
-            this.hole = this.Bodies.circle(this.holePos[0], this.holePos[1], 0.05, {
-                isStatic: true,
-                isSensor: true,
-                render: {
-                    fillStyle: 'black'
-                }
-            });
-
-            io.to(this.code).emit("createHole", this.holePos[0],this.holePos[1]);
-            this.Composite.add(this.engine.world, this.hole);
-
-            for (const [id, playerObj] of Object.entries(this.players)) {
-                Matter.Body.setPosition(playerObj.ballObj, {x: this.spawn[0], y: this.spawn[1]});
-            }
-        });
-
-
-
+        this.spawn = null;
+        this.map = null;
         this.players = {};
         // module aliases
         this.Engine = Matter.Engine,
@@ -182,20 +145,59 @@ class Game{
             }
         });
 
-
-        this.ground = this.Bodies.rectangle(400, 610, 810, 60, { isStatic: true});
-        /*
-        this.g1 = this.Bodies.rectangle(800, 400, 30, 600, { isStatic: true});
-        this.g2 = this.Bodies.rectangle(400, 450, 30, 355, { isStatic: true});
-        this.g3 = this.Bodies.rectangle(400, 400, 500, 30, { isStatic: true});
-        this.g4 = this.Bodies.rectangle(400, 100, 850, 30, { isStatic: true});
-        this.g6 = this.Bodies.rectangle(0, 300, 30, 600, { isStatic: true});
-        this.g5 = this.Bodies.circle(400, 125, 30, { isStatic: true});
-
-        this.Composite.add(this.engine.world, [this.ground,this.g1,this.g2,this.g3,this.g4,this.g5,this.g6]);
-         */
     }
 
+    setMap = function(map) {
+        this.map = map;
+        //this.segments = [];
+        conPool.query("select * from maps where mapName=\""+map.toString()+"\";", (e,r,f) => {
+            this.segNum = JSON.parse(r[0].lenSegs);
+            this.spawn = JSON.parse(r[0].spawnPos);
+            this.holePos = JSON.parse(r[0].holePos);
+            for (let z = 0; z < this.segNum.length; z++) {
+                conPool.query("SELECT * FROM SegWith" + this.segNum[z] + " WHERE mapOwner=\"" + map + "\"",
+                    (err, results, fields) => {
+                        //console.log(err);
+                        //console.log(results);
+                        this.tmpVerts = [];
+                        this.verts = results;
+                        //console.log(this.verts);
+                        //console.log(this.verts.length);
+                        for (let j = 0; j < this.verts.length; j++) {
+                            for (let i = 0; this.verts[j]["x" + i] != null; i++) {
+                                this.tmpVerts[i] = {x: this.verts[j]["x" + i], y: this.verts[j]["y" + i]};
+                                //console.log(this.tmpVerts);
+                            }
+                            //console.log("push");
+                            this.mapObj = createMap(0, 0, this.tmpVerts, 25, {isStatic: true}, "rgb(23,143,25)");
+                            this.segments.push(this.tmpVerts);
+                            this.Composite.add(this.engine.world, this.mapObj);
+                            if(this.segments.length >= this.segNum.length){
+                                console.log("wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
+                                io.to(this.code).emit("mapSegment", JSON.stringify(this.segments));
+                                break;
+                            }
+                        }
+                });
+            }
+
+            //adding a hole for the glof ball to go int
+            this.hole = this.Bodies.circle(this.holePos[0], this.holePos[1], 0.05, {
+                isStatic: true,
+                isSensor: true,
+                render: {
+                    fillStyle: 'black'
+                }
+            });
+
+            io.to(this.code).emit("createHole", this.holePos[0],this.holePos[1]);
+            this.Composite.add(this.engine.world, this.hole);
+
+            for (const [id, playerObj] of Object.entries(this.players)) {
+                Matter.Body.setPosition(playerObj.ballObj, {x: this.spawn[0], y: this.spawn[1]});
+            }
+        });
+    }
 
     addPlayer = function(player){
         //console.log(player);
@@ -274,17 +276,25 @@ setInterval(() => {
 
 
 io.on('connection', (socket) => {
+    socket.on('joinRoom', (room) => {
+        socket.code = room;
+        socket.join(room);
+        console.log("ITHINKIGNEIGNEI");
+        console.log([...socket.rooms]);
+    });
     socket.on('newPlayer', (room,name,color) => {
         socket.code = room;
         socket.join(room);
         console.log(room);
         console.log([...socket.rooms]);
-        if(!games[room].spawn) {
-            x = -5;
-            y = -5;
-        }else{
-            x = games[room].spawn[0];
-            y = games[room].spawn[1];
+        if(games[room]){
+            if(games[room].spawn) {
+                x = games[room].spawn[0];
+                y = games[room].spawn[1];
+            }else{
+                x = -5;
+                y = -5;
+            }
         }
         games[room].addPlayer(
             new Player(socket.id,
@@ -294,6 +304,7 @@ io.on('connection', (socket) => {
                 }),name,color
             ));
         io.to(socket.id).emit("mapSegment", JSON.stringify(games[room].segments));
+        console.log(games[room].segments);
         if(games[room].holePos)
             io.to(socket.id).emit("createHole", games[room].holePos[0],games[room].holePos[1]);
     });
@@ -312,8 +323,13 @@ io.on('connection', (socket) => {
         Matter.Body.applyForce(games[socket.code].players[sock].ballObj, pos, force);
     });
     socket.on('disconnect', () => {
-        if(games[socket.code] != undefined){
-            games[socket.code].deletePlayer(games[socket.code].players[socket.id]);
+        if(socket.code){
+            if(games[socket.code]){
+                if (games[socket.code].players[socket.id]) {
+                    games[socket.code].deletePlayer(games[socket.code].players[socket.id]);
+                    console.log("fjewiofjeiwo");
+                }
+            }
         }
         console.log('user disconnected');
     });
@@ -350,6 +366,11 @@ io.on('connection', (socket) => {
                 io.to(socket.id).emit("hereyougo", JSON.stringify(results));
             });
         }
+    });
+
+    socket.on("NewGame", (code) =>{
+        console.log("fjewiofj8932jfu843r2jf7890r4h2g78thrb8u");
+        games[code] = new Game(code);
     });
 });
 

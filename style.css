@@ -1,7 +1,7 @@
 body {
   background-color: #37504f;
   color: white;
-  font-family: "Arial Black", monospace;
+  font-family: "Garamond", monospace;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -78,4 +78,9 @@ label {
   background-color: #00aa00;
   scale: 105%;
   color: #12121a;
+}
+
+div{
+  margin: 3px;
+  padding: 0.5px;
 }
