@@ -1,9 +1,15 @@
 // module aliases
+
 var Engine = Matter.Engine,
   Render = Matter.Render,
   Runner = Matter.Runner,
   Bodies = Matter.Bodies,
   Composite = Matter.Composite;
+var Mouse = Matter.Mouse;
+var MouseConstraint = Matter.MouseConstraint;
+
+
+
 
 // create an engine
 var engine = Engine.create();
@@ -20,47 +26,97 @@ var render = Render.create({
     wireframes: false // <-- important
   }
 });
-tmpcol = "rgb(69,103,66)"
+
+
+//BELOW Is all about obstacles
+const CATEGORY_DRAGGABLE = 0x0002;
+let bool1 = false;
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+function SpawnObstacle() {
+  let obstaclePreset = [
+    [50,50], //First obstacle preset. Obstacle number 1
+    [30,100],
+    [70,30],
+    [30,70],
+    [20,30],
+    [40,40],
+    [30,100]
+  ]
+  let ObstacleChoice = getRandomInt(6);
+  console.log(ObstacleChoice);
+
+
+//Creates a draggable box just a normal box
+  let draggableBox = Bodies.rectangle(300, 300, obstaclePreset[ObstacleChoice][0], obstaclePreset[ObstacleChoice][1], {
+    isStatic: false,
+    inertia: Infinity,
+    collisionFilter: {
+      category: CATEGORY_DRAGGABLE
+    },
+    render: { fillStyle: "pink"}
+  });
+  Composite.add(engine.world, draggableBox)
+
+  // Make the object static after dragging
+  Matter.Events.on(mouseConstraint, "enddrag", function(event) {
+    if (event.body === draggableBox) {
+      Matter.Body.setStatic(draggableBox, true);
+      draggableBox.render.fillStyle = 'grey'; // once an object is active you must refrence it a different way than Matter.body
+      socket.emit("createObstacle",draggableBox.position.x,draggableBox.position.y,obstaclePreset[0][0],obstaclePreset[0][1]);// Send the draggable box information to the server
+    }
+  });
+}
 /*
-var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true,
-  render:{
-    fillStyle: tmpcol
-  }});
-
-var g1 = Bodies.rectangle(800, 400, 30, 600, { isStatic: true,
-  render:{
-    fillStyle: tmpcol
-  }});
-var g2 = Bodies.rectangle(400, 450, 30, 355, { isStatic: true,
-  render:{
-    fillStyle: tmpcol
-  }});
-var g3 = Bodies.rectangle(400, 400, 500, 30, { isStatic: true,
-  render:{
-    fillStyle: tmpcol
-  }});
-var g4 = Bodies.rectangle(400, 100, 850, 30, { isStatic: true,
-  render:{
-    fillStyle: tmpcol
-  }});
-var g6 = Bodies.rectangle(0, 300, 30, 600, { isStatic: true,
-  render:{
-    fillStyle: tmpcol
-  }});
-var g5 = Bodies.circle(400, 125, 30, { isStatic: true,
-  render:{
-    fillStyle: tmpcol
-  }});
-
-Composite.add(engine.world, [ground,g1,g2,g3,g4,g5,g6]);
-
+function DeleteObstacle() {
+  Matter.Events.on(mouseConstraint, "enddrag", function(event) {
+    if (event.body === draggableBox) {
+      Matter.Body.setStatic(draggableBox, true);
+      draggableBox.render.fillStyle = 'grey'; // once an object is active you must refrence it a different way than Matter.body
+      socket.emit("createObstacle",draggableBox.position.x,draggableBox.position.y,obstaclePreset[0][0],obstaclePreset[0][1]);// Send the draggable box information to the server
+    }
+  });
+}
 
  */
+
+
+// makes the mouse renderer used to track mouse and then drag objects
+var mouse = Mouse.create(render.canvas);
+//mouse.pixelRatio = 2; //Changes the coordinates for high res displays just in case
+var mouseConstraint = MouseConstraint.create(engine,{
+  mouse: mouse,
+  constraint: {
+    stiffness: 0.2,
+    render: {
+      visable: true }
+    },
+    collisionFilter: {
+      mask: CATEGORY_DRAGGABLE
+    }
+});
+
+Composite.add(engine.world, mouseConstraint);
+render.mouse = mouse;
+
+
+
+
+
+
+tmpcol = "rgb(69,103,66)"
+
+
 const socket = io.connect('ws://localhost');
 
 
 
+//HOLLLLEEEE AHHAHAHAHAHA
 //so that the hole is visible on the frontend
+
 socket.on("createHole",(x,y)=>{
   var hole = Bodies.circle(x, y, 19, {
     isStatic: true,
@@ -82,6 +138,10 @@ var runner = Runner.create();
 // run the engine
 Runner.run(runner, engine);
 
+
+
+
+
 //mouseCons = Matter.MouseConstraint.create(engine)     Composite.add add mouse for it to work
 
 canvas = document.querySelector("canvas")
@@ -89,19 +149,14 @@ canvas.style.position = 'absolute';
 canvas.style.left = '0px';
 canvas.style.top = '0px';
 
+
 canvas.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
-  /*
-  if (mapMode) {
-    tmpVerts.push({ x: e.clientX, y: e.clientY });
-    c1 = Matter.Bodies.circle(e.clientX, e.clientY, 25 / 2, { isStatic: true });
-    Composite.add(engine.world, c1);
-    tmpCircles.push(c1);
-  }
-  else {
-  pushBall(e) }
-   */
-  pushBall(e)
-});
+  if (mouseConstraint.body) { //this determines if a body is currently being moved by the mouse constraint if so exit click event
+    return;
+  }else{
+      pushBall(e)}
+  );
+
 
 function pushBall(e) {
   myBall = players[socket.id].ballObj
@@ -116,11 +171,6 @@ function pushBall(e) {
   force = Matter.Vector.create(-relX / 4000, -relY / 4000);
 
   console.log(myBall.velocity.x, myBall.velocity.y);
-  if (players[socket.id].stopped) {
-    socket.emit('click', pos, force, socket.id);
-    players[socket.id].stopped = false;
-  }
-  //Matter.Body.applyForce(myBall, pos, force);
 }
 
 players = {
@@ -142,6 +192,7 @@ class Player {
     this.stopped = true;
   }
 }
+
 
 socket.on('createPlayer', function (name, sock, x, y, color) {
   if (players[sock] == undefined) {
@@ -228,6 +279,41 @@ function createMap(x, y, verts, width, options, col) {
 
   return ret;
 }
+
+
+let obstacles = {}
+let index = 1
+socket.on('createObstacle', (x2,y2,Width,Hight) =>{
+  console.log("Recieved Obstacle CREATING")
+  obstacles["Obstacle" + index] = Matter.Bodies.rectangle(x2,y2,Width,Hight, {
+    isStatic: true,
+    render: { fillStyle: "grey"}
+  });
+  Composite.add(engine.world,obstacles["Obstacle" + index]);
+  index++;
+});
+
+
+
+/*
+socket.on('CreateWall', (x2,y2,Length,Width) =>{
+  console.log("Building Wall");
+  let wall = Bodies.rectangle(x2, y2, Length, Width, { isStatic: true,
+  render:{
+    fillStyle: tmpcol
+  }})
+  Composite.add(engine.world,wall);
+});
+
+socket.on('ImportWall', (x2,y2,Length,Width) =>{
+  console.log("Building Wall");
+  let wall = Bodies.rectangle(x2, y2, Length, Width, { isStatic: true,
+    render:{
+      fillStyle: tmpcol
+    }})
+  Composite.add(engine.world,wall);
+});
+*/
 
 socket.on("mapSegment", (verts) => {
     //console.log(verts);

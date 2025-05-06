@@ -122,6 +122,10 @@ class Game{
         games[code] = this;
 
 
+        this.obstacles = [];
+        this.index = 0;
+
+
         Matter.Events.on(this.engine, 'collisionStart', (event) => {
             const pairs = event.pairs;
 
@@ -146,6 +150,8 @@ class Game{
         });
 
     }
+
+
 
     setMap = function(map) {
         this.map = map;
@@ -189,6 +195,7 @@ class Game{
                     fillStyle: 'black'
                 }
             });
+
 
             io.to(this.code).emit("createHole", this.holePos[0],this.holePos[1]);
             this.Composite.add(this.engine.world, this.hole);
@@ -305,7 +312,50 @@ io.on('connection', (socket) => {
         console.log(games[room].segments);
         if(games[room].holePos)
             io.to(socket.id).emit("createHole", games[room].holePos[0],games[room].holePos[1]);
+//from here
+        //This BElow is important code for updated new players with current obstacle postions
+        let indexCounter = games[socket.code].index
+        let indexCounter2 = (games[socket.code].index -1)
+        console.log("There are currently: ",indexCounter, " obstacles in game room");
+
+        if (indexCounter > 0) {
+            console.log("LOADING CURRENTLY PLACED OBSTACLES")
+            for (let i = 0; i < indexCounter; i++) {
+                console.log("back at the TOP")
+                socket.to(socket.code).emit('createObstacle',);
+                console.log(indexCounter);
+                let currentObstacle = games[socket.code].obstacles["Obstacle" + i];
+                console.log(i,'The current Obstacle is: ', games[socket.code].obstacles["Obstacle" + i]);
+                let width2 = currentObstacle.bounds.max.x - currentObstacle.bounds.min.x;
+                let height2 = currentObstacle.bounds.max.y - currentObstacle.bounds.min.y;
+
+                socket.emit('createObstacle',currentObstacle.position.x,currentObstacle.position.y,width2,height2);
+                console.log("MADE IT HERE",i);
+            }
+
+        }
+
+    });//end of newPlayer Socket
+
+    // THIS CODE will create obstacle postions recieved from the client then send the new ones to the other players
+    socket.on('createObstacle', (x2,y2,Width,Hight) =>{
+        console.log("createObstacle");
+        index = games[socket.code].index; // don't know why these shortcuts I made dont work
+        //obstacles = [socket.code].obstacles; // don't know why these shortcuts I made dont work
+        games[socket.code].obstacles["Obstacle" + index] = Matter.Bodies.rectangle(x2,y2,Width,Hight, {
+            isStatic: true,
+            render: { fillStyle: "grey"}
+        });
+        //Matter.Body.setAngle(obstacles["Obstacle" + index], Angle);
+
+        index = games[socket.code].index;
+        console.log(x2,y2,Width,Hight);
+        socket.to(socket.code).emit('createObstacle', x2,y2,Width,Hight);
+        games[socket.code].Composite.add(games[socket.code].engine.world,games[socket.code].obstacles["Obstacle" + index]);
+        games[socket.code].index++;
+        console.log(games[socket.code].index);
     });
+//to here
     console.log(socket.id);
 
     socket.on('requestPlayer', (sock,room) => {
