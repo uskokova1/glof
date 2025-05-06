@@ -110,27 +110,25 @@ render.mouse = mouse;
 tmpcol = "rgb(69,103,66)"
 
 
+const socket = io.connect('ws://localhost');
+
 
 
 //HOLLLLEEEE AHHAHAHAHAHA
 //so that the hole is visible on the frontend
-var hole = Bodies.circle(900, 500, 19, {
-  isStatic: true,
-  isSensor: true,
-  render: {
-    fillStyle: "black"
-  }
+
+socket.on("createHole",(x,y)=>{
+  var hole = Bodies.circle(x, y, 19, {
+    isStatic: true,
+    isSensor: true,
+    render: {
+      fillStyle: "black"
+    }
+  });
+  Composite.add(engine.world, hole);
 });
-Composite.add(engine.world, hole);
 
 
-
-
-
-
-
-// add all of the bodies to the world
-//Composite.add(engine.world, ground);
 // run the renderer
 Render.run(render);
 
@@ -144,12 +142,6 @@ Runner.run(runner, engine);
 
 
 
-
-
-
-
-
-
 //mouseCons = Matter.MouseConstraint.create(engine)     Composite.add add mouse for it to work
 
 canvas = document.querySelector("canvas")
@@ -157,13 +149,16 @@ canvas.style.position = 'absolute';
 canvas.style.left = '0px';
 canvas.style.top = '0px';
 
-document.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
-  if (mouseConstraint.body) { //this determines if a body is currently being moved by the mouse constraint if so exit click event
-    console.log("it worked");
-    return;
-  }
-  if (e.target.tagName === 'BUTTON') return; //THIS SECTION determines if what you clicked on is a button or not.
 
+canvas.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
+  if (mouseConstraint.body) { //this determines if a body is currently being moved by the mouse constraint if so exit click event
+    return;
+  }else{
+      pushBall(e)}
+  );
+
+
+function pushBall(e) {
   myBall = players[socket.id].ballObj
   bounds = canvas.getBoundingClientRect();
   relX = e.clientX - bounds.left - myBall.position.x;
@@ -176,35 +171,21 @@ document.addEventListener('click', function (e) { //on click, gets the mouse X a
   force = Matter.Vector.create(-relX / 4000, -relY / 4000);
 
   console.log(myBall.velocity.x, myBall.velocity.y);
-  /*
-  if(players[socket.id].stopped){
-    socket.emit('click', pos, force, socket.id);
-    players[socket.id].stopped = false;
-  }
+}
 
-   */
-
-  if (!bool1){
-    socket.emit('click', pos, force, socket.id);
-  }
-
-  //Matter.Body.applyForce(myBall, pos, force);
-});
-
-players={
+players = {
 
 };
-
-const socket = io.connect('ws://localhost');
 
 const urlParams = new URLSearchParams(window.location.search);
 const room = urlParams.get('room');
 const name = urlParams.get('nick');
-const color = urlParams.get('color');
-socket.emit("newPlayer", room,name,color);
+const color = window.location.hash;
+socket.emit("newPlayer", room, name, color);
+//socket.emit("requestMap");       so that when you reload it will request the map state
 
-class Player{
-  constructor(name,color,ballObj){
+class Player {
+  constructor(name, color, ballObj) {
     this.name = name;
     this.color = color;
     this.ballObj = ballObj;
@@ -213,27 +194,27 @@ class Player{
 }
 
 
-socket.on('createPlayer', function(name,sock,x,y,color) {
-  if(players[sock] == undefined) {
-    players[sock] = new Player(name,color,
-        Bodies.circle(x, y, 14, {
-          render: {
-            fillStyle: color,
-            strokeStyle: 'blue',
-            lineWidth: 3
-          },
-          frictionAir:0.05,
-          restitution:0.8
-        }));
+socket.on('createPlayer', function (name, sock, x, y, color) {
+  if (players[sock] == undefined) {
+    players[sock] = new Player(name, color,
+      Bodies.circle(x, y, 14, {
+        render: {
+          fillStyle: color,
+          strokeStyle: 'blue',
+          lineWidth: 3
+        },
+        frictionAir: 0.05,
+        restitution: 0.8
+      }));
     Composite.add(engine.world, players[sock].ballObj);
   }
 });
 
-socket.on('updateAll', (x,y,velx,vely,sock)=>{
+socket.on('updateAll', (x, y, velx, vely, sock) => {
   if (players[sock] == undefined) {
-    socket.emit("requestPlayer",sock,room);
-  }else {
-    if(players[sock].ballObj.position.x - x < 0.01 && players[sock].ballObj.position.y - y  < 0.01) {
+    socket.emit("requestPlayer", sock, room);
+  } else {
+    if (players[sock].ballObj.position.x - x < 0.01 && players[sock].ballObj.position.y - y < 0.01) {
       players[sock].stopped = true;
     }
     Matter.Body.setPosition(players[sock].ballObj, Matter.Vector.create(x, y));
@@ -249,10 +230,55 @@ socket.on('removePlayer', (sock) => {
 // in the event that a player makes it into the hole
 socket.on('playerScored', (sock) => {
   if (sock === socket.id) {
-     console.log('Player ${sock} scored!');
-    }
-
+    console.log('Player ${sock} scored!');
+  }
 });
+
+socket.on()
+
+//code interpreted from https://stackoverflow.com/questions/58507514/matter-js-hollow-circle-body
+const Body = Matter.Body;
+function createMap(x, y, verts, width, options, col) {
+  const parts = [];
+  for (let i = 1; i < verts.length; i++) {
+    m = (verts[i - 1].y - verts[i].y) / (verts[i - 1].x - verts[i].x); //slope
+    normal = -1 / m; //perpendicular line of slope
+    angle = Math.atan(normal); //angle of normal in radians
+
+    const body = Bodies.fromVertices((verts[i - 1].x + verts[i].x) / 2, (verts[i - 1].y + verts[i].y) / 2, [
+      { x: verts[i - 1].x, y: verts[i - 1].y },
+      { x: verts[i - 1].x + width * Math.cos(angle), y: verts[i - 1].y + width * Math.sin(angle) },
+      { x: verts[i].x + width * Math.cos(angle), y: verts[i].y + width * Math.sin(angle) },
+      { x: verts[i].x, y: verts[i].y }
+    ], {
+      render: {
+        fillStyle: col
+      }
+    });
+    parts.push(body);
+  }
+  //catches the last edge :P
+  m = (verts[verts.length - 1].y - verts[0].y) / (verts[verts.length - 1].x - verts[0].x);
+  normal = -1 / m;
+  angle = Math.atan(normal);
+  const body = Bodies.fromVertices((verts[0].x + verts[verts.length - 1].x) / 2, (verts[0].y + verts[verts.length - 1].y) / 2, [
+    { x: verts[0].x, y: verts[0].y },
+    { x: verts[0].x + width * Math.cos(angle), y: verts[0].y + width * Math.sin(angle) },
+    { x: verts[verts.length - 1].x + width * Math.cos(angle), y: verts[verts.length - 1].y + width * Math.sin(angle) },
+    { x: verts[verts.length - 1].x, y: verts[verts.length - 1].y }
+  ], {
+    render: {
+      fillStyle: col
+    }
+  });
+  parts.push(body);
+
+  const ret = Body.create(options);
+  Body.setParts(ret, parts);
+  Body.translate(ret, { x: x, y: y });
+
+  return ret;
+}
 
 
 let obstacles = {}
@@ -269,7 +295,7 @@ socket.on('createObstacle', (x2,y2,Width,Hight) =>{
 
 
 
-
+/*
 socket.on('CreateWall', (x2,y2,Length,Width) =>{
   console.log("Building Wall");
   let wall = Bodies.rectangle(x2, y2, Length, Width, { isStatic: true,
@@ -287,4 +313,16 @@ socket.on('ImportWall', (x2,y2,Length,Width) =>{
     }})
   Composite.add(engine.world,wall);
 });
+*/
 
+socket.on("mapSegment", (verts) => {
+    //console.log(verts);
+    verts = JSON.parse(verts);
+    console.log(verts);
+    for(i = 0; i < verts.length; i++) {
+      //console.log(verts[i]);
+      newMap = createMap(0, 0, verts[i], 25, {isStatic: true}, "rgb(23,143,25)");
+      Composite.add(engine.world, newMap)
+    }
+
+});

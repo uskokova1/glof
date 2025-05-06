@@ -9,21 +9,52 @@
 <div class="menu-container">
     <h1 class="game-title">Glof</h1>
 
-    <form action="/frontend.html" class="menu-form">
+    <form action="/hostpage.html" class="menu-form">
         <label for="nick">Nickname:</label>
         <input type="text" id="nick" name="nick" required>
-
-        <label for="room">Room:</label>
-        <input type="text" id="room" name="room" required>
 
         <label for="color">Ball Color:</label>
         <input type="color" id="color" name="color" value="#00ff00">
 
         <div class="button-group">
-            <input type="submit" value="Join Game" class="join-btn">
-            <button type="button" class="host-btn" disabled>Host Game</button>
+            <input type="submit" value="Join Room:" class="join-btn">
         </div>
-    </form>
+
+<!--        <label for="room">Room:</label>-->
+        <input type="text" id="room" name="room" placeholder="room code" required>
+<!--        <button type="button" id="resetdb" >resetdb</button> -->
+<!--        <button type="button" id="showdb" >showdb</button> -->
+
+
+    <div class="button-group" id="host" >
+        <input type="button" value="Host" class="join-btn">
+    </div>
+
+        <div class="button-group" id="map" >
+            <input type="button" value="MAP" class="join-btn">
+        </div>
+
+
+
+    <script>
+        document.getElementById("host").addEventListener("click", function(event) {
+            nickname = document.getElementById("nick").value
+            if(nickname == "" || nickname == "Enter a name!!!!"){
+                document.getElementById("nick").value = "Enter a name!!!!";
+            }
+            else{
+                window.location.replace("hostpage.html?nick=" +
+                    document.getElementById("nick").value+
+                    "&color="+document.getElementById("color").value);
+            }
+        });
+        document.getElementById("map").addEventListener("click", function(event) {
+            window.location.replace("map.html");
+        });
+    </script>
+    <div id="db">
+
+    </div>
 </div>
 </body>
 </html>
