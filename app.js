@@ -325,7 +325,7 @@ socket.on("mapSegment", (verts) => {
     console.log(verts);
     for(i = 0; i < verts.length; i++) {
       //console.log(verts[i]);
-      newMap = createMap(0, 0, verts[i], 25, {isStatic: true}, "rgb(23,143,25)");
+      newMap = createMap(0, 0, verts[i], 35, {isStatic: true}, "rgb(23,143,25)");
       Composite.add(engine.world, newMap)
     }
 });

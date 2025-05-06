@@ -141,7 +141,7 @@ socket.on("hereyougo", (verts) =>{
         for(i = 0; verts[j]["x"+i] != null; i++){
             tmpVerts[i] = {x:verts[j]["x"+i],y:verts[j]["y"+i]};
         }
-        mapObj = createMap(0,0,tmpVerts,25,{ isStatic: true }, "rgb(23,143,25)");
+        mapObj = createMap(0,0,tmpVerts,35,{ isStatic: true }, "rgb(23,143,25)");
         segments.push(mapObj);
         Composite.add(engine.world, mapObj);
     }

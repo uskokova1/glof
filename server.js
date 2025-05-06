@@ -175,7 +175,7 @@ class Game{
                                 //console.log(this.tmpVerts);
                             }
                             //console.log("push");
-                            this.mapObj = createMap(0, 0, this.tmpVerts, 25, {isStatic: true}, "rgb(23,143,25)");
+                            this.mapObj = createMap(0, 0, this.tmpVerts, 35, {isStatic: true}, "rgb(23,143,25)");
                             this.segments.push(this.tmpVerts);
                             this.Composite.add(this.engine.world, this.mapObj);
                             if(this.segments.length >= this.segNum.length){
