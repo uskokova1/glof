@@ -10,7 +10,6 @@ var MouseConstraint = Matter.MouseConstraint;
 
 
 
-
 // create an engine
 var engine = Engine.create();
 engine.gravity.y = 0
@@ -29,6 +28,10 @@ var render = Render.create({
 
 
 //BELOW Is all about obstacles
+let d = new Date();
+let timeOfLastObstacle = Date.now();
+
+
 const CATEGORY_DRAGGABLE = 0x0002;
 let bool1 = false;
 
@@ -37,6 +40,20 @@ function getRandomInt(max) {
 }
 
 function SpawnObstacle() {
+  //First section is for determinging the cooldown time for placing obstacles
+  let d = new Date();
+  console.log("SpawnObstacle");
+  console.log(Date.now());
+  console.log("time difference",Date.now()-timeOfLastObstacle);
+
+
+  if (Date.now() - timeOfLastObstacle < 3000){ // CHANG Number here for how longtime time for obstacle should take to respawn.Milleseconds 1000 per seconds
+    console.log("leavingFunction");
+    return;
+
+  }
+  console.log("CONTINUEING");
+  timeOfLastObstacle = d.getSeconds();
   let obstaclePreset = [
     [50,50], //First obstacle preset. Obstacle number 1
     [30,100],
@@ -157,7 +174,8 @@ canvas.addEventListener('click', function (e) { //on click, gets the mouse X and
   pushBall(e)
 });
 
-
+let t = new Date();
+let timeOfLastPut = t.getSeconds();
 function pushBall(e) {
   myBall = players[socket.id].ballObj
   bounds = canvas.getBoundingClientRect();
@@ -169,12 +187,26 @@ function pushBall(e) {
 
   pos = Matter.Vector.create(myBall.position.x, myBall.position.y);
   force = Matter.Vector.create(-relX / 4000, -relY / 4000);
-
+  /*
   console.log(myBall.velocity.x, myBall.velocity.y);
   if (players[socket.id].stopped) {
     socket.emit('click', pos, force, socket.id);
     players[socket.id].stopped = false;
   }
+
+   */
+
+
+  console.log("SpawnObstacle");
+  console.log("current time: ",Date.now());
+  console.log("time difference FOR LAST PUT",Date.now()-timeOfLastPut);
+  if (Date.now() - timeOfLastPut < 1500 ){ // CHANG Number here for how longtime time for obstacle should take to respawn. MIlliseconds 1000 per second
+    console.log("leavingFunction");
+    return;
+
+  }
+  timeOfLastPut = Date.now();
+  socket.emit('click', pos, force, socket.id);
 }
 
 players = {
