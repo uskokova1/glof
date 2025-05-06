@@ -382,6 +382,9 @@ io.on('connection', (socket) => {
         console.log('user disconnected');
     });
 
+    socket.on('removeObstacle', (socket) => {
+        console.log("removing obstacle");
+    });
     socket.on("uploadMap", (cmd1,cmd2)=>{
         console.log(cmd1);
         console.log(cmd2);
