@@ -153,9 +153,9 @@ canvas.style.top = '0px';
 canvas.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
   if (mouseConstraint.body) { //this determines if a body is currently being moved by the mouse constraint if so exit click event
     return;
-  }else{
-      pushBall(e)}
-  );
+  }
+  pushBall(e)
+});
 
 
 function pushBall(e) {
@@ -171,6 +171,10 @@ function pushBall(e) {
   force = Matter.Vector.create(-relX / 4000, -relY / 4000);
 
   console.log(myBall.velocity.x, myBall.velocity.y);
+  if (players[socket.id].stopped) {
+    socket.emit('click', pos, force, socket.id);
+    players[socket.id].stopped = false;
+  }
 }
 
 players = {
@@ -324,5 +328,4 @@ socket.on("mapSegment", (verts) => {
       newMap = createMap(0, 0, verts[i], 25, {isStatic: true}, "rgb(23,143,25)");
       Composite.add(engine.world, newMap)
     }
-
 });

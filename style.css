@@ -1,6 +1,5 @@
 body {
-  background: #2A7B9B;
-  background-color: linear-gradient(90deg,rgba(42, 123, 155, 1) 0%, rgba(74, 177, 139, 1) 35%, rgba(87, 199, 133, 1) 14%, rgba(237, 221, 83, 1) 100%);
+  background-color: #37504f;
   color: white;
   font-family: "Garamond", monospace;
   display: flex;
