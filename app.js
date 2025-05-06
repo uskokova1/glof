@@ -27,17 +27,38 @@ var render = Render.create({
   }
 });
 
-let obstaclePreset = [
+
+//BELOW Is all about obstacles
+const CATEGORY_DRAGGABLE = 0x0002;
+
+function SpawnObstacle() {
+  let obstaclePreset = [
     [50,50], //First obstacle preset. Obstacle number 1
     [50,50]
-]
+  ]
 //Creates a draggable box just a normal box
-let draggableBox = Bodies.rectangle(300, 300, obstaclePreset[0][0], obstaclePreset[0][1], {
-  isStatic: false,
-  inertia: Infinity,
-  render: { fillStyle: "pink"}
-});
-Composite.add(engine.world, draggableBox)
+  let draggableBox = Bodies.rectangle(300, 300, obstaclePreset[0][0], obstaclePreset[0][1], {
+    isStatic: false,
+    inertia: Infinity,
+    collisionFilter: {
+      category: CATEGORY_DRAGGABLE
+    },
+    render: { fillStyle: "pink"}
+  });
+  Composite.add(engine.world, draggableBox)
+
+  // Make the object static after dragging
+  Matter.Events.on(mouseConstraint, "enddrag", function(event) {
+    if (event.body === draggableBox) {
+      Matter.Body.setStatic(draggableBox, true);
+      draggableBox.render.fillStyle = 'grey'; // once an object is active you must refrence it a different way than Matter.body
+      socket.emit("createObstacle",draggableBox.position.x,draggableBox.position.y,obstaclePreset[0][0],obstaclePreset[0][1]);// Send the draggable box information to the server
+    }
+  });
+
+
+}
+
 
 
 
@@ -52,8 +73,7 @@ var mouseConstraint = MouseConstraint.create(engine,{
       visable: true }
     },
     collisionFilter: {
-      // allow interaction with the items in here
-      category: draggableBox.collisionFilter.category
+      mask: CATEGORY_DRAGGABLE
     }
 });
 
@@ -99,14 +119,6 @@ var runner = Runner.create();
 Runner.run(runner, engine);
 
 
-// Make the object static after dragging
-Matter.Events.on(mouseConstraint, "enddrag", function(event) {
-  if (event.body === draggableBox) {
-    Matter.Body.setStatic(draggableBox, true);
-    draggableBox.render.fillStyle = 'grey'; // once an object is active you must refrence it a different way than Matter.body
-    socket.emit("createObstacle",draggableBox.position.x,draggableBox.position.y,obstaclePreset[0][0],obstaclePreset[0][1]);// Send the draggable box information to the server
-  }
-});
 
 
 
@@ -143,6 +155,8 @@ document.addEventListener('click', function (e) { //on click, gets the mouse X a
   }
 
    */
+
+
   socket.emit('click', pos, force, socket.id);
   //Matter.Body.applyForce(myBall, pos, force);
 });
@@ -243,5 +257,4 @@ socket.on('ImportWall', (x2,y2,Length,Width) =>{
     }})
   Composite.add(engine.world,wall);
 });
-
 
