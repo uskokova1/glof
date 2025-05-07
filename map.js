@@ -35,6 +35,10 @@ Runner.run(runner, engine);
 
 canvas = document.querySelector("canvas")
 canvas.style.position = 'absolute';
+addEventListener("resize", (event) => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
 canvas.style.left = '0px';
 canvas.style.top = '0px';
 
@@ -50,6 +54,7 @@ mouseConstraint = Matter.MouseConstraint.create(engine, {
     }
   }
 });
+render.mouse = mouse;
 
 Composite.add(engine.world, mouseConstraint);
 segIndex = 0;
@@ -91,6 +96,7 @@ document.getElementById("cycle").addEventListener("click", function () {
     tmpCircles[i].render.fillStyle = "white";
   }
 });
+
 document.getElementById("delete").addEventListener("click", function () {
   Composite.remove(engine.world, segments[segIndex]);
   for (let i = 0; i < tmpCircles.length; i++) {
@@ -102,6 +108,7 @@ document.getElementById("delete").addEventListener("click", function () {
   segIndex++;
 });
 
+
 circles = [];
 segments = [];
 
@@ -112,11 +119,12 @@ Matter.Events.on(mouseConstraint, "enddrag", () => {
   exitMapMode();
 });
 
+
 canvas.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
   if (mode == "Create") {
     //Composite.remove(mouseConstraint);
-    tmpVerts.push({ x: e.clientX, y: e.clientY });
-    c1 = Matter.Bodies.circle(e.clientX, e.clientY, 25 / 2, { frictionAir: 1 });
+    tmpVerts.push({ x: mouse.position.x, y: mouse.position.y });
+    c1 = Matter.Bodies.circle(mouse.position.x, mouse.position.y, 25 / 2, { frictionAir: 1 });
     Composite.add(engine.world, c1);
     tmpCircles.push(c1);
   }
@@ -245,3 +253,43 @@ ajax.onload = function () {
     console.log(mapTable);
   }
 }
+
+scrollDist = 500;
+xlook = 0;
+ylook = 0;
+addEventListener("mousemove", function(e){
+  if(e.buttons === 2){
+    canvas.style.cursor = "grab";
+    xlook += e.movementX;
+    ylook += e.movementY;
+
+    Render.lookAt(render, {
+          min:{x: scrollDist-xlook,y: scrollDist-ylook},
+          max:{x: scrollDist-xlook,y: scrollDist-ylook}
+        },
+        {
+          x: scrollDist,
+          y: scrollDist
+        }
+    );
+  }
+  else{
+    canvas.style.cursor = "default";
+  }
+})
+addEventListener("mousewheel", function(event) {
+  //console.log(scrollDist);
+  if (event.wheelDelta >= 0) {
+    scrollDist -= 20;
+  }
+  else {
+    scrollDist += 20;
+  }
+  Render.lookAt(render, {
+    min:{x: scrollDist-xlook,y: scrollDist-ylook},
+    max:{x: scrollDist-xlook,y: scrollDist-ylook}
+  },{
+    x: scrollDist,
+    y: scrollDist
+  });
+});

@@ -37,7 +37,24 @@ canvas = document.querySelector("canvas")
 canvas.style.position = 'absolute';
 canvas.style.left = '0px';
 canvas.style.top = '0px';
+addEventListener("resize", (event) => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
 canvas.style.zIndex = '-5';
+/*
+Render.lookAt(render, [{
+    "min": {
+        "x": canvas.width-(3*canvas.width/4),
+        "y": canvas.width-(3*canvas.width/4)
+    },
+    "max": {
+        "x": canvas.width-canvas.width/4,
+        "y": canvas.width-canvas.width/4
+    }
+}]);
+
+ */
 
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -137,14 +154,68 @@ socket.on("hereyougo", (verts) =>{
     tmpVerts = [];
     verts = JSON.parse(verts);
     console.log(verts);
+    maxArea = 0;
+    changed = false;
     for(j = 0; j < verts.length; j++){
         for(i = 0; verts[j]["x"+i] != null; i++){
             tmpVerts[i] = {x:verts[j]["x"+i],y:verts[j]["y"+i]};
         }
         mapObj = createMap(0,0,tmpVerts,35,{ isStatic: true }, "rgb(23,143,25)");
+        if(Matter.Vertices.area(tmpVerts,false) > maxArea)
+        {
+            changed = true;
+            maxVertsObj = mapObj;
+            console.log(Matter.Vertices.area(tmpVerts,false));
+        }
         segments.push(mapObj);
         Composite.add(engine.world, mapObj);
     }
+    if(changed){
+        console.log(maxVertsObj.bounds);
+        Render.lookAt(render, maxVertsObj,{
+            x: scrollDist,
+            y: scrollDist
+        });
+    }
+});
+scrollDist = 200;
+xlook = 0;
+ylook = 0;
+addEventListener("mousemove", function(e){
+    if(e.buttons === 2){
+        canvas.style.cursor = "grab";
+        xlook += e.movementX;
+        ylook += e.movementY;
+
+        Render.lookAt(render, {
+                min:{x: maxVertsObj.bounds.min.x-xlook,y: maxVertsObj.bounds.min.y-ylook},
+                max:{x: maxVertsObj.bounds.max.x-xlook,y: maxVertsObj.bounds.max.y-ylook}
+            },
+            {
+                x: scrollDist,
+                y: scrollDist
+            }
+        );
+    }
+    else{
+        canvas.style.cursor = "default";
+    }
+})
+addEventListener("mousewheel", function(event) {
+    console.log(scrollDist);
+    if (event.wheelDelta >= 0) {
+        scrollDist -= 20;
+    }
+    else {
+        scrollDist += 20;
+    }
+    Render.lookAt(render, {
+        min:{x: maxVertsObj.bounds.min.x-xlook,y: maxVertsObj.bounds.min.y-ylook},
+        max:{x: maxVertsObj.bounds.max.x-xlook,y: maxVertsObj.bounds.max.y-ylook}
+    },{
+        x: scrollDist,
+        y: scrollDist
+    });
 });
 
 

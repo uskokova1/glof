@@ -148,6 +148,10 @@ canvas = document.querySelector("canvas")
 canvas.style.position = 'absolute';
 canvas.style.left = '0px';
 canvas.style.top = '0px';
+addEventListener("resize", (event) => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
 
 
 canvas.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
@@ -161,8 +165,10 @@ canvas.addEventListener('click', function (e) { //on click, gets the mouse X and
 function pushBall(e) {
   myBall = players[socket.id].ballObj
   bounds = canvas.getBoundingClientRect();
-  relX = e.clientX - bounds.left - myBall.position.x;
-  relY = e.clientY - bounds.top - myBall.position.y;
+  relX = mouse.position.x - myBall.position.x;
+  relY = mouse.position.y - myBall.position.y;
+  //relX = e.clientX - bounds.left - myBall.position.x - xlook;
+  //relY = e.clientY - bounds.top - myBall.position.y - ylook;
   console.log(relX, relY);
   relX = Matter.Common.clamp(relX, -300, 300);
   relY = Matter.Common.clamp(relY, -300, 300);
@@ -319,13 +325,94 @@ socket.on('ImportWall', (x2,y2,Length,Width) =>{
 });
 */
 
+maxVertsObj = null;
 socket.on("mapSegment", (verts) => {
     //console.log(verts);
     verts = JSON.parse(verts);
     console.log(verts);
+    maxArea = 0;
+    changed = false;
     for(i = 0; i < verts.length; i++) {
       //console.log(verts[i]);
       newMap = createMap(0, 0, verts[i], 35, {isStatic: true}, "rgb(23,143,25)");
+      if(Matter.Vertices.area(verts[i],false) > maxArea)
+      {
+        changed = true;
+        maxVertsObj = newMap;
+        //console.log(Matter.Vertices.area(verts[i],false));
+      }
       Composite.add(engine.world, newMap)
+      if(changed){
+        //console.log(maxVertsObj.bounds);
+        Render.lookAt(render, maxVertsObj,{
+          x: scrollDist,
+          y: scrollDist
+        });
+      }
     }
 });
+
+scrollDist = 200;
+xlook = 0;
+ylook = 0;
+addEventListener("mousemove", function(e){
+  if(e.buttons === 2){
+    canvas.style.cursor = "grab";
+    xlook += e.movementX;
+    ylook += e.movementY;
+
+    Render.lookAt(render, {
+          min:{x: maxVertsObj.bounds.min.x-xlook,y: maxVertsObj.bounds.min.y-ylook},
+          max:{x: maxVertsObj.bounds.max.x-xlook,y: maxVertsObj.bounds.max.y-ylook}
+        },
+        {
+          x: scrollDist,
+          y: scrollDist
+        }
+    );
+  }
+  else{
+    canvas.style.cursor = "default";
+  }
+})
+addEventListener("mousewheel", function(event) {
+  //console.log(scrollDist);
+  if (event.wheelDelta >= 0) {
+    scrollDist -= 20;
+  }
+  else {
+    scrollDist += 20;
+  }
+  Render.lookAt(render, {
+    min:{x: maxVertsObj.bounds.min.x-xlook,y: maxVertsObj.bounds.min.y-ylook},
+    max:{x: maxVertsObj.bounds.max.x-xlook,y: maxVertsObj.bounds.max.y-ylook}
+  },{
+    x: scrollDist,
+    y: scrollDist
+  });
+});
+/*
+namediv = document.getElementById("name");
+const ctx = canvas.getContext("2d");
+
+console.log(namediv);
+function updateNames(){
+
+  for (const [id, playerObj] of Object.entries(players)) {
+    if(playerObj.ballObj)
+    {
+      ctx.fillText(name,playerObj.ballObj.x,playerObj.ballObj.y);
+      namediv = document.querySelector("#name");
+    }
+  }
+
+}
+
+
+function rerender() {
+  updateNames();
+  Matter.Engine.update(engine);
+  requestAnimationFrame(rerender);
+}
+rerender();
+ */
