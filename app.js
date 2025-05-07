@@ -103,9 +103,11 @@ function SpawnObstacle() {
     }
   });
 }
+
+//BELOW IS FOR DELETING OBSTACLES
 //event.body.bounds.max.x - event.body.bounds.min.x
 function DeleteObstacle() {
-  console.log("DeletingObstacle");
+  console.log("DeletingObstacle","Obstacles I can delete: ",allObstacles);
   DeleteMode = true;
   for (let i = 0; i < allObstacles.length; i++) {
     //console.log("here")
@@ -361,12 +363,23 @@ function createMap(x, y, verts, width, options, col) {
 
 socket.on('createObstacle', (x2,y2,Width,Hight) =>{
   console.log("Recieved Obstacle CREATING Length: ", Width,"hight", Hight);
+  obstacles["Obstacle" + index] = Bodies.rectangle(x2, y2,Width,Hight, {
+    isStatic: true,
+    inertia: Infinity,
+    collisionFilter: {
+      category: CATEGORY_DRAGGABLE
+    },
+    render: { fillStyle: "grey"}
+  });
+  /*
   obstacles["Obstacle" + index] = Matter.Bodies.rectangle(x2,y2,Width,Hight, {
     isStatic: true,
     render: { fillStyle: "grey"}
   });
-  Composite.add(engine.world,obstacles["Obstacle" + index]);
+
+   */
   allObstacles.push(obstacles["Obstacle"+index])//add to array of obstacles
+  Composite.add(engine.world,obstacles["Obstacle" + index]);
   console.log("Obstacle Number: ", index,"what allObstacles looks like: ", allObstacles)
   index++;
 });

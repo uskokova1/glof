@@ -324,14 +324,15 @@ io.on('connection', (socket) => {
             for (let i = 0; i < indexCounter; i++) {
                 let currentObstacle = games[socket.code].obstacles["Obstacle" + i];
                 console.log("Static notice: ",currentObstacle.isStatic);
-
                 if (!currentObstacle.isStatic){
-                    return;
+                    continue;
                 }
+
+
                 console.log("back at the TOP")
                 //socket.to(socket.code).emit('createObstacle',);
                 console.log(indexCounter);
-                console.log(i,'The current Obstacle is: ', games[socket.code].obstacles["Obstacle" + i]);
+                //console.log(i,'The current Obstacle is: ', games[socket.code].obstacles["Obstacle" + i]);
                 let width2 = currentObstacle.bounds.max.x - currentObstacle.bounds.min.x;
                 let height2 = currentObstacle.bounds.max.y - currentObstacle.bounds.min.y;
 
