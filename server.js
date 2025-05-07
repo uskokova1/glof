@@ -121,8 +121,8 @@ class Game{
         this.code = code;
         games[code] = this;
 
-
-        this.obstacles = [];
+        this.obstacles = {};
+        this.allobstacles = [];
         this.index = 0;
 
 
@@ -320,11 +320,17 @@ io.on('connection', (socket) => {
 
         if (indexCounter > 0) {
             console.log("LOADING CURRENTLY PLACED OBSTACLES")
+
             for (let i = 0; i < indexCounter; i++) {
-                console.log("back at the TOP")
-                socket.to(socket.code).emit('createObstacle',);
-                console.log(indexCounter);
                 let currentObstacle = games[socket.code].obstacles["Obstacle" + i];
+                console.log("Static notice: ",currentObstacle.isStatic);
+
+                if (!currentObstacle.isStatic){
+                    return;
+                }
+                console.log("back at the TOP")
+                //socket.to(socket.code).emit('createObstacle',);
+                console.log(indexCounter);
                 console.log(i,'The current Obstacle is: ', games[socket.code].obstacles["Obstacle" + i]);
                 let width2 = currentObstacle.bounds.max.x - currentObstacle.bounds.min.x;
                 let height2 = currentObstacle.bounds.max.y - currentObstacle.bounds.min.y;
@@ -352,8 +358,9 @@ io.on('connection', (socket) => {
         console.log(x2,y2,Width,Hight);
         socket.to(socket.code).emit('createObstacle', x2,y2,Width,Hight);
         games[socket.code].Composite.add(games[socket.code].engine.world,games[socket.code].obstacles["Obstacle" + index]);
-        games[socket.code].index++;
+        games[socket.code].allobstacles.push(games[socket.code].obstacles["Obstacle" + index])
         console.log(games[socket.code].index);
+        games[socket.code].index++;
     });
 //to here
     console.log(socket.id);
@@ -382,9 +389,15 @@ io.on('connection', (socket) => {
         console.log('user disconnected');
     });
 
-    socket.on('removeObstacle', (socket) => {
-        console.log("removing obstacle");
+    socket.on('removeObstacle', (indexToRemove) => {
+        console.log("removing obstacle",indexToRemove,games[socket.code].allobstacles);
+        games[socket.code].Composite.remove(games[socket.code].engine.world,games[socket.code].allobstacles[indexToRemove]);
+        console.log(":Removing index",indexToRemove);
+        Matter.Body.setStatic(games[socket.code].allobstacles[indexToRemove], false);
+        socket.to(socket.code).emit('removeObstacle', indexToRemove);
     });
+
+
     socket.on("uploadMap", (cmd1,cmd2)=>{
         console.log(cmd1);
         console.log(cmd2);

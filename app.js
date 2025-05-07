@@ -55,7 +55,7 @@ function SpawnObstacle() {
 
 
 
-  if (Date.now() - timeOfLastObstacle < 3000){ // CHANG Number here for how longtime time for obstacle should take to respawn.Milleseconds 1000 per seconds
+  if (Date.now() - timeOfLastObstacle < 300){ // 0CHANG Number here for how longtime time for obstacle should take to respawn.Milleseconds 1000 per seconds
     console.log("ON Cooldown");
     return;
 
@@ -73,7 +73,8 @@ function SpawnObstacle() {
   ]
   let ObstacleChoice = getRandomInt(6);
   console.log(ObstacleChoice);
-
+  console.log(ObstacleChoice);
+  let savedObstacleChoice = ObstacleChoice
 
 //Creates a draggable box just a normal box
   obstacles["Obstacle" + index] = Bodies.rectangle(300, 300, obstaclePreset[ObstacleChoice][0], obstaclePreset[ObstacleChoice][1], {
@@ -84,37 +85,51 @@ function SpawnObstacle() {
     },
     render: { fillStyle: "pink"}
   });
+  console.log("Obstacle number: ",index,"Obstacle Number",ObstacleChoice,"Size Width",obstaclePreset[ObstacleChoice][0],"size Length",obstaclePreset[ObstacleChoice][1]);
   allObstacles.push(obstacles["Obstacle"+index])//add to array of obstacles
   Composite.add(engine.world, obstacles["Obstacle" + index])
 
   // Make the object static after dragging
+
   Matter.Events.on(mouseConstraint, "enddrag", function(event) {
     if (allObstacles.includes(event.body) && !event.body.isStatic && !DeleteMode) {
       Matter.Body.setStatic(event.body, true);
       event.body.render.fillStyle = 'grey'; // once an object is active you must refrence it a different way than Matter.body
-      socket.emit("createObstacle",event.body.position.x,event.body.position.y,obstaclePreset[ObstacleChoice][0],obstaclePreset[ObstacleChoice][1]);// Send the draggable box information to the server
+      const width = event.body.bounds.max.x - event.body.bounds.min.x;
+      const length =event.body.bounds.max.y - event.body.bounds.min.y;
+      socket.emit("createObstacle",event.body.position.x,event.body.position.y,width,length);// Send the draggable box information to the server
+      console.log("Sending Data to server to duplicate on server and other clients Length: ",width,length);
     index++;
     }
   });
 }
-
+//event.body.bounds.max.x - event.body.bounds.min.x
 function DeleteObstacle() {
   console.log("DeletingObstacle");
   DeleteMode = true;
   for (let i = 0; i < allObstacles.length; i++) {
-    console.log("here")
-    console.log(allObstacles[i]);
+    //console.log("here")
+    //console.log(allObstacles[i]);
     Matter.Body.setStatic(allObstacles[i], false);
     allObstacles[i].render.fillStyle = 'pink';
   }
   Matter.Events.on(mouseConstraint, "enddrag", function(event) {
+    console.log("Yes Enddrag is running");
     if (allObstacles.includes(event.body) && !event.body.isStatic && DeleteMode) {
-      console.log("DeleteObstacle");
-      //socket.emit("removeObstacle",ob)
+      console.log("DeleteObstacle",allObstacles.indexOf(event.body));
+      socket.emit("removeObstacle",allObstacles.indexOf(event.body));
       Composite.remove(engine.world, event.body);
+      for (let i = 0; i < allObstacles.length; i++) {
+       // console.log("here")
+       // console.log(allObstacles[i]);
+        Matter.Body.setStatic(allObstacles[i], true);
+        allObstacles[i].render.fillStyle = 'grey';
+      }
     }
     DeleteMode = false;
   });
+
+
 }
 
 
@@ -345,13 +360,21 @@ function createMap(x, y, verts, width, options, col) {
 
 
 socket.on('createObstacle', (x2,y2,Width,Hight) =>{
-  console.log("Recieved Obstacle CREATING")
+  console.log("Recieved Obstacle CREATING Length: ", Width,"hight", Hight);
   obstacles["Obstacle" + index] = Matter.Bodies.rectangle(x2,y2,Width,Hight, {
     isStatic: true,
     render: { fillStyle: "grey"}
   });
   Composite.add(engine.world,obstacles["Obstacle" + index]);
+  allObstacles.push(obstacles["Obstacle"+index])//add to array of obstacles
+  console.log("Obstacle Number: ", index,"what allObstacles looks like: ", allObstacles)
   index++;
+});
+
+socket.on('removeObstacle', (indexToRemove) => {
+  console.log("removing obstacle",indexToRemove,allObstacles,"Does it exist: ",allObstacles[indexToRemove]);
+  Composite.remove(engine.world,allObstacles[indexToRemove]);
+  console.log("Obstacle Number: ", index,"what allObstacles looks like: ", allObstacles)
 });
 
 
