@@ -121,8 +121,8 @@ class Game{
         this.code = code;
         games[code] = this;
 
-
-        this.obstacles = [];
+        this.obstacles = {};
+        this.allobstacles = [];
         this.index = 0;
 
 
@@ -301,6 +301,22 @@ io.on('connection', (socket) => {
                 y = -5;
             }
         }
+        /*//THIS WAS ALL A WASTE OF TIME.
+        console.log("length of array is",games[socket.code].allobstacles.length);
+        if ((games[socket.code].allobstacles.length) > 1) {
+
+            for (let i = 0; i < (games[socket.code].allobstacles.length); i++) {
+                console.log("length of array is",games[socket.code].allobstacles.length,"Array number sending",games[socket.code].allobstacles[i]);
+                let xposition = games[socket.code].allobstacles[i].x;
+                let yposition = games[socket.code].allobstacles[i].y;
+                let width2 = games[socket.code].bounds.max.x - games[socket.code].bounds.min.x;
+                let height2 = games[socket.code].bounds.max.y - games[socket.code].bounds.min.y;
+                socket.emit('sendingArrayOfObstacles', xposition,yposition,width2,height2);
+            }
+        }
+
+         */
+
         games[room].addPlayer(
             new Player(socket.id,
                 Matter.Bodies.circle(x, y, 14, {
@@ -313,24 +329,31 @@ io.on('connection', (socket) => {
         if(games[room].holePos)
             io.to(socket.id).emit("createHole", games[room].holePos[0],games[room].holePos[1]);
 //from here
-        //This BElow is important code for updated new players with current obstacle postions
+        //This BElow is important code for updated new players with current obstacle positions
         let indexCounter = games[socket.code].index
         let indexCounter2 = (games[socket.code].index -1)
         console.log("There are currently: ",indexCounter, " obstacles in game room");
 
         if (indexCounter > 0) {
             console.log("LOADING CURRENTLY PLACED OBSTACLES")
+
             for (let i = 0; i < indexCounter; i++) {
-                console.log("back at the TOP")
-                socket.to(socket.code).emit('createObstacle',);
-                console.log(indexCounter);
                 let currentObstacle = games[socket.code].obstacles["Obstacle" + i];
-                console.log(i,'The current Obstacle is: ', games[socket.code].obstacles["Obstacle" + i]);
+                console.log("Static notice: ",currentObstacle.isStatic);
+
+
+                //Code for stringifing code.
+
+
+
+                console.log("back at the TOP")
+                //socket.to(socket.code).emit('createObstacle',);
+                console.log(indexCounter);
+                //console.log(i,'The current Obstacle is: ', games[socket.code].obstacles["Obstacle" + i]);
                 let width2 = currentObstacle.bounds.max.x - currentObstacle.bounds.min.x;
                 let height2 = currentObstacle.bounds.max.y - currentObstacle.bounds.min.y;
-
-                socket.emit('createObstacle',currentObstacle.position.x,currentObstacle.position.y,width2,height2);
-                console.log("MADE IT HERE",i);
+                socket.emit('createObstacle',currentObstacle.position.x,currentObstacle.position.y,width2,height2,currentObstacle.isStatic);
+                console.log("Finished adding this object",i);
             }
 
         }
@@ -347,13 +370,15 @@ io.on('connection', (socket) => {
             render: { fillStyle: "grey"}
         });
         //Matter.Body.setAngle(obstacles["Obstacle" + index], Angle);
-
+        //check
         index = games[socket.code].index;
         console.log(x2,y2,Width,Hight);
-        socket.to(socket.code).emit('createObstacle', x2,y2,Width,Hight);
+        let isStatic1 = games[socket.code].obstacles["Obstacle" + index].isStatic
+        socket.to(socket.code).emit('createObstacle', x2,y2,Width,Hight,isStatic1);
         games[socket.code].Composite.add(games[socket.code].engine.world,games[socket.code].obstacles["Obstacle" + index]);
-        games[socket.code].index++;
+        games[socket.code].allobstacles.push(games[socket.code].obstacles["Obstacle" + index])
         console.log(games[socket.code].index);
+        games[socket.code].index++;
     });
 //to here
     console.log(socket.id);
@@ -365,6 +390,7 @@ io.on('connection', (socket) => {
             games[room].players[sock].ballObj.x,
             games[room].players[sock].ballObj.y,
             games[room].players[sock].color,
+            games[room].index
         );
     });
     socket.on('click', (pos,force,sock) => {
@@ -382,9 +408,16 @@ io.on('connection', (socket) => {
         console.log('user disconnected');
     });
 
-    socket.on('removeObstacle', (socket) => {
-        console.log("removing obstacle");
+    socket.on('removeObstacle', (indexToRemove) => {
+        console.log("removing obstacle",indexToRemove,games[socket.code].allobstacles);
+        games[socket.code].Composite.remove(games[socket.code].engine.world,games[socket.code].allobstacles[indexToRemove]);
+        console.log(":Removing index",indexToRemove);
+        Matter.Body.setStatic(games[socket.code].allobstacles[indexToRemove], false);
+        console.log("This object Static status: ",games[socket.code].allobstacles[indexToRemove].isStatic);
+        socket.to(socket.code).emit('removeObstacle', indexToRemove);
     });
+
+
     socket.on("uploadMap", (cmd1,cmd2)=>{
         console.log(cmd1);
         console.log(cmd2);
