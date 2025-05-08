@@ -448,6 +448,13 @@ addEventListener("mousewheel", function(event) {
     y: scrollDist
   });
 });
+scores=0;
+socket.on("playerScored", (id)=>{
+  scores++;
+  document.getElementById("leaderboard").innerHTML += players[id].name+ " Scored! : "+scores+" <br>";
+  //leaderboard = players[id]+ " Scored!";
+});
+
 /*
 namediv = document.getElementById("name");
 const ctx = canvas.getContext("2d");
