@@ -403,7 +403,7 @@ socket.on('createObstacle', (x2,y2,Width,Hight,isStatic) =>{
   //index++;
 });
 
-
+//check
 
 
 socket.on('removeObstacle', (indexToRemove) => {

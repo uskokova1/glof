@@ -370,7 +370,7 @@ io.on('connection', (socket) => {
             render: { fillStyle: "grey"}
         });
         //Matter.Body.setAngle(obstacles["Obstacle" + index], Angle);
-
+        //check
         index = games[socket.code].index;
         console.log(x2,y2,Width,Hight);
         let isStatic1 = games[socket.code].obstacles["Obstacle" + index].isStatic
