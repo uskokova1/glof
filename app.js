@@ -144,8 +144,8 @@ render.mouse = mouse;
 
 tmpcol = "rgb(69,103,66)"
 
-
-const socket = io.connect('ws://localhost');
+console.log(window.location.host);
+const socket = io.connect(window.location.host);
 
 
 

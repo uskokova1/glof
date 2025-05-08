@@ -62,7 +62,7 @@ const room = urlParams.get('room');
 const name = urlParams.get('nick');
 let color = window.location.hash;
 host = false;
-const socket = io.connect('ws://localhost');
+const socket = io.connect(window.location.host);
 players = document.getElementById("players");
 socket.on('connect', ()=>{
     if(!room){

@@ -202,7 +202,7 @@ function exitMapMode() {
 }
 
 ajax = new XMLHttpRequest();
-const socket = io.connect('ws://localhost');
+const socket = io.connect(window.location.host);
 
 document.getElementById("upload").addEventListener("click", function (event) {
   mapname = document.getElementById("name").value;
