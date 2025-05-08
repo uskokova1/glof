@@ -8,6 +8,20 @@ var Engine = Matter.Engine,
 var Mouse = Matter.Mouse;
 var MouseConstraint = Matter.MouseConstraint;
 
+//Start of stuff for obstacles
+let obstacles = {};
+let index = 0;
+let allObstacles = [];
+
+let DeleteMode = false;
+
+let d = new Date();
+let timeOfLastObstacle = Date.now();
+
+
+const CATEGORY_DRAGGABLE = 0x0002;
+let bool1 = false;
+//end of stuff for obstacles
 
 
 // create an engine
@@ -27,95 +41,7 @@ var render = Render.create({
 });
 
 
-//BELOW Is all about obstacles
 
-let obstacles = {};
-let index = 0;
-let allObstacles = [];
-
-let DeleteMode = false;
-
-let d = new Date();
-let timeOfLastObstacle = Date.now();
-
-
-const CATEGORY_DRAGGABLE = 0x0002;
-let bool1 = false;
-
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
-}
-
-function SpawnObstacle() {
-  //First section is for determinging the cooldown time for placing obstacles
-  let d = new Date();
-  console.log("SpawnObstacle", timeOfLastObstacle,'current time', Date.now());
-
-  console.log("difference",Date.now() - timeOfLastObstacle);
-
-
-
-  if (Date.now() - timeOfLastObstacle < 3000){ // CHANG Number here for how longtime time for obstacle should take to respawn.Milleseconds 1000 per seconds
-    console.log("ON Cooldown");
-    return;
-
-  }
-  console.log("Spawning Obstacle");
-  timeOfLastObstacle = Date.now();
-  let obstaclePreset = [
-    [50,50], //First obstacle preset. Obstacle number 1
-    [30,100],
-    [70,30],
-    [30,70],
-    [20,30],
-    [40,40],
-    [30,100]
-  ]
-  let ObstacleChoice = getRandomInt(6);
-  console.log(ObstacleChoice);
-
-
-//Creates a draggable box just a normal box
-  obstacles["Obstacle" + index] = Bodies.rectangle(300, 300, obstaclePreset[ObstacleChoice][0], obstaclePreset[ObstacleChoice][1], {
-    isStatic: false,
-    inertia: Infinity,
-    collisionFilter: {
-      category: CATEGORY_DRAGGABLE
-    },
-    render: { fillStyle: "pink"}
-  });
-  allObstacles.push(obstacles["Obstacle"+index])//add to array of obstacles
-  Composite.add(engine.world, obstacles["Obstacle" + index])
-
-  // Make the object static after dragging
-  Matter.Events.on(mouseConstraint, "enddrag", function(event) {
-    if (allObstacles.includes(event.body) && !event.body.isStatic && !DeleteMode) {
-      Matter.Body.setStatic(event.body, true);
-      event.body.render.fillStyle = 'grey'; // once an object is active you must refrence it a different way than Matter.body
-      socket.emit("createObstacle",event.body.position.x,event.body.position.y,obstaclePreset[ObstacleChoice][0],obstaclePreset[ObstacleChoice][1]);// Send the draggable box information to the server
-    index++;
-    }
-  });
-}
-
-function DeleteObstacle() {
-  console.log("DeletingObstacle");
-  DeleteMode = true;
-  for (let i = 0; i < allObstacles.length; i++) {
-    console.log("here")
-    console.log(allObstacles[i]);
-    Matter.Body.setStatic(allObstacles[i], false);
-    allObstacles[i].render.fillStyle = 'pink';
-  }
-  Matter.Events.on(mouseConstraint, "enddrag", function(event) {
-    if (allObstacles.includes(event.body) && !event.body.isStatic && DeleteMode) {
-      console.log("DeleteObstacle");
-      //socket.emit("removeObstacle",ob)
-      Composite.remove(engine.world, event.body);
-    }
-    DeleteMode = false;
-  });
-}
 
 
 
@@ -189,6 +115,109 @@ addEventListener("resize", (event) => {
 });
 
 
+
+
+//BELOW Is all about obstacles
+
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+function SpawnObstacle() {
+  //First section is for determinging the cooldown time for placing obstacles
+  let d = new Date();
+  console.log("SpawnObstacle", timeOfLastObstacle,'current time', Date.now());
+
+  console.log("difference",Date.now() - timeOfLastObstacle);
+
+
+
+  if (Date.now() - timeOfLastObstacle < 300){ // 0CHANG Number here for how longtime time for obstacle should take to respawn.Milleseconds 1000 per seconds
+    console.log("ON Cooldown");
+    return;
+
+  }
+  console.log("Spawning Obstacle");
+  timeOfLastObstacle = Date.now();
+  let obstaclePreset = [
+    [50,50], //First obstacle preset. Obstacle number 1
+    [30,100],
+    [70,30],
+    [30,70],
+    [20,30],
+    [40,40],
+    [30,100]
+  ]
+  let ObstacleChoice = getRandomInt(6);
+  console.log(ObstacleChoice);
+  console.log(ObstacleChoice);
+  let savedObstacleChoice = ObstacleChoice
+
+//Creates a draggable box just a normal box
+  obstacles["Obstacle" + index] = Bodies.rectangle(300, 300, obstaclePreset[ObstacleChoice][0], obstaclePreset[ObstacleChoice][1], {
+    isStatic: false,
+    inertia: Infinity,
+    id:index,
+    collisionFilter: {
+      category: CATEGORY_DRAGGABLE
+    },
+    render: { fillStyle: "pink"}
+  });
+  console.log("Obstacle number: ",index,"Obstacle Number",ObstacleChoice,"Size Width",obstaclePreset[ObstacleChoice][0],"size Length",obstaclePreset[ObstacleChoice][1]);
+  allObstacles.push(obstacles["Obstacle"+index])//add to array of obstacles
+  Composite.add(engine.world, obstacles["Obstacle" + index])
+  index++;
+  // Make the object static after dragging
+}
+Matter.Events.on(mouseConstraint, "enddrag", function(event) {
+  if (allObstacles.includes(event.body) && !event.body.isStatic && !DeleteMode) {
+    Matter.Body.setStatic(event.body, true);
+    event.body.render.fillStyle = 'grey'; // once an object is active you must refrence it a different way than Matter.body
+    const width = event.body.bounds.max.x - event.body.bounds.min.x;
+    const length =event.body.bounds.max.y - event.body.bounds.min.y;
+    socket.emit("createObstacle",event.body.position.x,event.body.position.y,width,length);// Send the draggable box information to the server
+    console.log("Sending Data to server to duplicate on server and other clients Length: ",width,length);
+  }
+  console.log("Yes Enddrag is running");
+  if (allObstacles.includes(event.body) && !event.body.isStatic && DeleteMode) {
+    let indexToRemove = allObstacles.indexOf(event.body);
+    console.log("DeleteObstacle",allObstacles.indexOf(event.body));
+    socket.emit("removeObstacle",indexToRemove);
+    Composite.remove(engine.world, event.body);
+    for (let i = 0; i < allObstacles.length; i++) {
+      // console.log("here")
+      // console.log(allObstacles[i]);
+      Matter.Body.setStatic(allObstacles[i], true);
+      allObstacles[i].render.fillStyle = 'grey';
+    }
+  }
+  DeleteMode = false;
+});
+
+//BELOW IS FOR DELETING OBSTACLES
+//event.body.bounds.max.x - event.body.bounds.min.x
+function DeleteObstacle() {
+  console.log("DeletingObstacle","Obstacles I can delete: ",allObstacles);
+  DeleteMode = true;
+  for (let i = 0; i < allObstacles.length; i++) {
+    //console.log("here")
+    //console.log(allObstacles[i]);
+    Matter.Body.setStatic(allObstacles[i], false);
+    allObstacles[i].render.fillStyle = 'pink';
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
 canvas.addEventListener('click', function (e) { //on click, gets the mouse X and Y relative to boxA and adds a force
   if (mouseConstraint.body) { //this determines if a body is currently being moved by the mouse constraint if so exit click event
     return;
@@ -256,7 +285,7 @@ class Player {
 
 
 
-socket.on('createPlayer', function (name, sock, x, y, color) {
+socket.on('createPlayer', function (name, sock, x, y, color,objIndex) {
   if (players[sock] == undefined) {
     players[sock] = new Player(name, color,
       Bodies.circle(x, y, 14, {
@@ -270,6 +299,14 @@ socket.on('createPlayer', function (name, sock, x, y, color) {
       }));
     Composite.add(engine.world, players[sock].ballObj);
   }
+  index = objIndex;
+  console.log("INDES IS NOW: ", index);
+});
+
+//Code BELOW will update client Obstacle array with server obstacle array:
+socket.on('sendingArrayOfObstacles', (obstaclePass) => {
+  let obstaclePass1 = JSON.parse(obstaclePass);
+  allObstacles.push(obstaclePass);
 });
 
 socket.on('updateAll', (x, y, velx, vely, sock) => {
@@ -350,14 +387,35 @@ function createMap(x, y, verts, width, options, col) {
 
 
 
-socket.on('createObstacle', (x2,y2,Width,Hight) =>{
-  console.log("Recieved Obstacle CREATING")
-  obstacles["Obstacle" + index] = Matter.Bodies.rectangle(x2,y2,Width,Hight, {
+
+
+
+socket.on('createObstacle', (x2,y2,Width,Hight,isStatic) =>{
+  console.log("Recieved Obstacle CREATING Length: ", Width,"hight", Hight);
+  obstacles["Obstacle" + index] = Bodies.rectangle(x2, y2,Width,Hight, {
     isStatic: true,
+    inertia: Infinity,
+    collisionFilter: {
+      category: CATEGORY_DRAGGABLE
+    },
     render: { fillStyle: "grey"}
   });
-  Composite.add(engine.world,obstacles["Obstacle" + index]);
-  index++;
+
+  if (isStatic){
+    Composite.add(engine.world,obstacles["Obstacle" + index]);
+  }
+  allObstacles.push(obstacles["Obstacle"+index])//add to array of obstacles
+  console.log("Obstacle Number: ", index,"what allObstacles looks like: ", allObstacles)
+  //index++;
+});
+
+//check
+
+
+socket.on('removeObstacle', (indexToRemove) => {
+  console.log("removing obstacle",indexToRemove,allObstacles,"Does it exist: ",allObstacles[indexToRemove]);
+  Composite.remove(engine.world,allObstacles[indexToRemove]);
+  console.log("Obstacle Number: ", index,"what allObstacles looks like: ", allObstacles)
 });
 
 
