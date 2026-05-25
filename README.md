@@ -1,4 +1,4 @@
-#glof!
+# glof!
 
 a simple top down golf game built with Node.js backend, matter-js, mysql, socket.io
 
